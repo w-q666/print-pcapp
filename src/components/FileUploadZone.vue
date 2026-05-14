@@ -52,15 +52,16 @@ async function handleUpload(file: File) {
   >
     <div class="upload-content">
       <CloudUploadOutlined class="upload-icon" />
-      <p class="upload-title">拖拽文件到此处或点击选择</p>
-      <p class="upload-hint">支持 PDF、图片、纯文本、HTML</p>
+      <span class="upload-title">拖拽文件到此处或点击上传</span>
+      <span class="upload-separator">|</span>
+      <span class="upload-hint">支持 PDF、图片、纯文本、HTML</span>
     </div>
   </UploadDragger>
 </template>
 
 <style scoped>
 .upload-zone {
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .upload-zone :deep(.ant-upload-drag) {
@@ -68,24 +69,32 @@ async function handleUpload(file: File) {
 }
 
 .upload-content {
-  padding: 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 18px;
 }
 
 .upload-icon {
-  font-size: 32px;
+  font-size: 24px;
   color: var(--primary-color, #1677ff);
-  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .upload-title {
   font-size: 14px;
+  font-weight: 500;
   color: var(--text-primary, rgba(0, 0, 0, 0.85));
-  margin-bottom: 4px;
+}
+
+.upload-separator {
+  color: #d9d9d9;
+  font-size: 14px;
 }
 
 .upload-hint {
   font-size: 12px;
   color: var(--text-secondary, rgba(0, 0, 0, 0.45));
-  margin: 0;
 }
 </style>
