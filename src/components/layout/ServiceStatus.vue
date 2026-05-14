@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, provide } from 'vue'
 import { Tooltip } from 'ant-design-vue'
 import { getPrintServers } from '../../api/print-api'
 
@@ -35,6 +35,8 @@ onMounted(() => {
 onUnmounted(() => {
   if (timer) clearInterval(timer)
 })
+
+provide('serviceStatus', status)
 </script>
 
 <template>
