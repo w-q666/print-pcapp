@@ -1,7 +1,10 @@
 mod commands;
 mod db;
 mod entities;
+mod http_server;
 pub mod logger;
+mod network;
+mod qr;
 mod repos;
 
 use db::{init_db, AppState};
@@ -41,6 +44,8 @@ pub fn run() {
             commands::file_read,
             commands::file_delete,
             commands::file_list,
+            commands::lan_server_url,
+            commands::lan_server_qrcode,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

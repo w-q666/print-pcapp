@@ -17,7 +17,7 @@ pub fn generate_qr_base64(content: &str) -> Result<String, String> {
     let mut png_bytes: Vec<u8> = Vec::new();
     let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
     image::ImageEncoder::write_image(
-        &encoder,
+        encoder,
         img.as_raw(),
         img.width(),
         img.height(),
