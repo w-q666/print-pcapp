@@ -250,6 +250,64 @@ impl SystemLogRepo {
         Ok(())
     }
 
+    pub fn count(db: &Mutex<Connection>) -> Result<i64, String> {
+        let conn = db.lock().map_err(|e| e.to_string())?;
+        conn.query_row("SELECT COUNT(*) FROM system_logs", [], |row| row.get(0))
+            .map_err(|e| e.to_string())
+    }
+
+    pub fn query_all(db: &Mutex<Connection>, q: &LogQuery) -> Result<Vec<SystemLog>, String> {
+        let conn = db.lock().map_err(|e| e.to_string())?;
+
+        let mut conditions: Vec<String> = Vec::new();
+        let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
+
+        if let Some(ref level) = q.level {
+            conditions.push(format!("level = ?{}", params.len() + 1));
+            params.push(Box::new(level.clone()));
+        }
+        if let Some(ref category) = q.category {
+            conditions.push(format!("category = ?{}", params.len() + 1));
+            params.push(Box::new(category.clone()));
+        }
+        if let Some(ref keyword) = q.keyword {
+            conditions.push(format!("message LIKE ?{}", params.len() + 1));
+            params.push(Box::new(format!("%{}%", keyword)));
+        }
+
+        let where_clause = if conditions.is_empty() {
+            String::new()
+        } else {
+            format!("WHERE {}", conditions.join(" AND "))
+        };
+
+        let sql = format!(
+            "SELECT id, timestamp, level, category, message, logger \
+             FROM system_logs {} ORDER BY id DESC",
+            where_clause
+        );
+
+        let param_refs: Vec<&dyn rusqlite::types::ToSql> = params.iter().map(|p| p.as_ref()).collect();
+        let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(param_refs.as_slice(), |row| {
+                Ok(SystemLog {
+                    id: row.get(0)?,
+                    timestamp: row.get(1)?,
+                    level: row.get(2)?,
+                    category: row.get(3)?,
+                    message: row.get(4)?,
+                    logger: row.get(5)?,
+                })
+            })
+            .map_err(|e| e.to_string())?;
+
+        let mut logs = Vec::new();
+        for row in rows {
+            logs.push(row.map_err(|e| e.to_string())?);
+        }
+        Ok(logs)
+    }
 }
 
 #[cfg(test)]

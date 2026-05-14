@@ -2,6 +2,9 @@ import { ref, onUnmounted } from 'vue'
 import type { PrintStatus } from '../api/types'
 import { PrintStatusCode } from '../api/types'
 import { createWebSocket } from '../api/websocket-client'
+import { useLogger } from './useLogger'
+
+const logger = useLogger('frontend:useWebSocket')
 
 export function useWebSocket() {
   const ws = ref<WebSocket | null>(null)
@@ -23,25 +26,30 @@ export function useWebSocket() {
       onOpen() {
         isConnected.value = true
         retryCount = 0
+        logger.info('print', `WebSocket connected: ${url}`)
       },
       onMessage(data) {
         const msg = data as { code: number; msg: string; data?: string }
         if (msg.code === 0 && msg.data) {
           sessionId.value = msg.data
           status.value = 'connected'
+          logger.debug('print', `WebSocket session established: ${msg.data}`)
           return
         }
         lastMessage.value = { code: msg.code, msg: msg.msg }
         status.value = mapStatusCode(msg.code)
+        logger.debug('print', `WebSocket message: code=${msg.code}, msg=${msg.msg}`)
       },
       onClose() {
         isConnected.value = false
+        logger.warn('print', `WebSocket disconnected: ${url}`)
         if (retryCount !== Infinity) {
           scheduleReconnect()
         }
       },
       onError() {
         isConnected.value = false
+        logger.error('print', `WebSocket error: ${url}`)
       },
     })
 
@@ -54,6 +62,7 @@ export function useWebSocket() {
       : retryCount <= 4 ? Math.pow(2, retryCount - 1) * 1000
       : 30000
     retryCount++
+    logger.debug('print', `WebSocket reconnect #${retryCount} in ${delay}ms`)
     retryTimer = setTimeout(() => {
       retryTimer = null
       connect(currentUrl)
@@ -94,6 +103,7 @@ export function useWebSocket() {
     sessionId.value = null
     status.value = 'idle'
     isConnected.value = false
+    logger.info('print', 'WebSocket manually disconnected')
   }
 
   onUnmounted(disconnect)

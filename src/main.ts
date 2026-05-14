@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { invoke } from '@tauri-apps/api/core'
 import Antd from 'ant-design-vue'
-import { message } from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
 import './assets/styles/variables.css'
 import './assets/styles/global.css'
@@ -12,14 +12,32 @@ import './assets/styles/base-page.css'
 import router from './router'
 import App from './App.vue'
 
-const app = createApp(App)
-
-app.config.errorHandler = (err, _instance, info) => {
-  console.error('[Vue Error]', err, info)
-  message.error('操作失败，请稍后重试')
+function logGlobalError(message: string) {
+  invoke('log_insert', {
+    level: 'ERROR',
+    category: 'error',
+    message,
+    logger: 'frontend:global-error-handler',
+  }).catch(() => {})
 }
 
+const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 app.use(Antd)
+
+app.config.errorHandler = (err, instance, info) => {
+  const name = instance?.$options?.name || 'unknown'
+  logGlobalError(`[Vue] ${err} | component: ${name} | ${info}`)
+  console.error('[Vue Error]', err, instance, info)
+}
+
+window.onerror = (message, source, lineno, colno) => {
+  logGlobalError(`[Runtime] ${message} | ${source}:${lineno}:${colno}`)
+}
+
+window.addEventListener('unhandledrejection', (event) => {
+  logGlobalError(`[Promise] ${event.reason}`)
+})
+
 app.mount('#app')

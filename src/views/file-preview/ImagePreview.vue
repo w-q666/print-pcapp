@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { Image } from 'ant-design-vue'
 import { useFileSystem } from '../../composables/useFileSystem'
 import { getMimeType } from '../../utils/file-types'
 
@@ -57,10 +58,11 @@ onUnmounted(cleanup)
         <a-button size="small" @click="resetZoom">重置</a-button>
       </div>
       <div class="image-wrapper">
-        <img
+        <Image
           :src="imgSrc"
+          :preview="false"
           :style="{ transform: `scale(${scale})`, transformOrigin: 'top center' }"
-          alt="preview"
+          class="preview-image"
         />
       </div>
     </template>
@@ -95,7 +97,7 @@ onUnmounted(cleanup)
   text-align: center;
 }
 
-.image-wrapper img {
+.image-wrapper :deep(.ant-image) {
   max-width: 100%;
   transition: transform 0.2s;
 }

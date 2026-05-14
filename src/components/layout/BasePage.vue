@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { TypographyTitle, Flex } from 'ant-design-vue'
+
 defineProps<{
   title: string
 }>()
@@ -6,12 +8,12 @@ defineProps<{
 
 <template>
   <div class="base-page">
-    <header class="base-page-header">
-      <h2 class="base-page-title">{{ title }}</h2>
+    <Flex justify="space-between" align="center" class="base-page-header">
+      <TypographyTitle :level="2" class="base-page-title">{{ title }}</TypographyTitle>
       <div class="base-page-actions">
         <slot name="actions" />
       </div>
-    </header>
+    </Flex>
     <div class="base-page-content">
       <slot />
     </div>

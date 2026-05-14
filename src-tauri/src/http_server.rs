@@ -23,8 +23,17 @@ struct HttpStateInner {
     pub max_file_size: u64,
     /// 上传文件存储目录
     pub files_dir: PathBuf,
-    /// 数据库路径（预留，当前未使用）
+    /// 数据库路径，用于写入日志
     pub db_path: PathBuf,
+}
+
+fn http_log(db_path: &PathBuf, level: &str, source: &str, message: &str) {
+    if let Ok(conn) = rusqlite::Connection::open(db_path) {
+        let _ = conn.execute(
+            "INSERT INTO system_logs (level, category, message, logger) VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params![level, "upload", message, source],
+        );
+    }
 }
 
 impl HttpState {
@@ -73,6 +82,10 @@ async fn upload_handler(
     State(state): State<HttpState>,
     mut multipart: Multipart,
 ) -> Json<serde_json::Value> {
+    let log = |level: &str, msg: &str| {
+        http_log(&state.inner.db_path, level, "rust:http_server::handle_upload", msg);
+    };
+
     let mut token_value: Option<String> = None;
     let mut saved_file: Option<String> = None;
     let mut error: Option<String> = None;
@@ -88,9 +101,9 @@ async fn upload_handler(
         }
 
         if field_name == "file" {
-            // 验证 token（可能在 file field 之前或之后收到 token field）
             if let Some(ref t) = token_value {
                 if t != &state.inner.token {
+                    log("WARN", "token 校验失败：无效的访问令牌");
                     error = Some("无效的访问令牌".to_string());
                     break;
                 }
@@ -99,12 +112,12 @@ async fn upload_handler(
             let file_name = match field.file_name() {
                 Some(name) => name.to_string(),
                 None => {
+                    log("WARN", "上传请求未提供文件名");
                     error = Some("未提供文件名".to_string());
                     break;
                 }
             };
 
-            // 校验文件扩展名
             let ext = file_name
                 .rsplit('.')
                 .next()
@@ -114,27 +127,36 @@ async fn upload_handler(
             if !state.inner.allowed_extensions.is_empty()
                 && !state.inner.allowed_extensions.contains(&ext)
             {
+                log("WARN", &format!("扩展名被拒绝: .{} (文件: {})", ext, file_name));
                 error = Some(format!("不支持的文件格式: .{}", ext));
                 break;
             }
 
-            // 读取文件数据
             let data = match field.bytes().await {
                 Ok(bytes) => bytes,
                 Err(e) => {
+                    log("ERROR", &format!("读取文件数据失败: {} (文件: {})", e, file_name));
                     error = Some(format!("读取文件数据失败: {}", e));
                     break;
                 }
             };
 
-            // 校验文件大小
-            if data.len() as u64 > state.inner.max_file_size {
+            let file_size = data.len() as u64;
+            log("INFO", &format!(
+                "收到上传请求: {} ({:.2} KB)",
+                file_name, file_size as f64 / 1024.0
+            ));
+
+            if file_size > state.inner.max_file_size {
                 let max_mb = state.inner.max_file_size / (1024 * 1024);
+                log("WARN", &format!(
+                    "文件大小超限: {:.2} MB > {} MB (文件: {})",
+                    file_size as f64 / (1024.0 * 1024.0), max_mb, file_name
+                ));
                 error = Some(format!("文件过大，最大允许 {}MB", max_mb));
                 break;
             }
 
-            // 生成唯一文件名避免冲突
             let unique_name = format!(
                 "{}_{}",
                 chrono_free_timestamp(),
@@ -142,36 +164,38 @@ async fn upload_handler(
             );
             let dest = state.inner.files_dir.join(&unique_name);
 
-            // 确保目录存在
             if let Err(e) = std::fs::create_dir_all(&state.inner.files_dir) {
+                log("ERROR", &format!("创建存储目录失败: {}", e));
                 error = Some(format!("创建存储目录失败: {}", e));
                 break;
             }
 
-            // 写入文件
             if let Err(e) = std::fs::write(&dest, &data) {
+                log("ERROR", &format!("保存文件失败: {} (文件: {})", e, file_name));
                 error = Some(format!("保存文件失败: {}", e));
                 break;
             }
 
-            // TODO: 写入 print_jobs 表（source="mobile"）
-            // 当 DB 模块稳定后，在此处调用类似：
-            //   db::insert_print_job(&state.inner.db_path, &unique_name, "mobile")?;
+            log("INFO", &format!(
+                "文件上传成功: {} → {} ({:.2} KB)",
+                file_name, unique_name, file_size as f64 / 1024.0
+            ));
 
             saved_file = Some(unique_name);
         }
     }
 
-    // 延迟 token 验证：如果 token field 在 file field 之后出现
     if error.is_none() {
         match &token_value {
             None => {
+                log("WARN", "上传请求缺少访问令牌");
                 return Json(serde_json::json!({
                     "code": 401,
                     "msg": "缺少访问令牌"
                 }));
             }
             Some(t) if t != &state.inner.token => {
+                log("WARN", "token 校验失败：无效的访问令牌");
                 return Json(serde_json::json!({
                     "code": 403,
                     "msg": "无效的访问令牌"
@@ -194,20 +218,30 @@ async fn upload_handler(
             "msg": "上传成功",
             "data": { "filename": name }
         })),
-        None => Json(serde_json::json!({
-            "code": 400,
-            "msg": "未收到文件"
-        })),
+        None => {
+            log("WARN", "上传请求中未收到文件");
+            Json(serde_json::json!({
+                "code": 400,
+                "msg": "未收到文件"
+            }))
+        }
     }
 }
 
 /// 启动 HTTP 服务，绑定到 0.0.0.0:{port}
 pub async fn start_server(state: HttpState, port: u16) -> Result<(), String> {
     let addr = format!("0.0.0.0:{}", port);
+    let db_path = state.inner.db_path.clone();
     let router = create_router(state);
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
-        .map_err(|e| format!("绑定端口 {} 失败: {}", port, e))?;
+        .map_err(|e| {
+            let msg = format!("绑定端口 {} 失败: {}", port, e);
+            http_log(&db_path, "ERROR", "rust:http_server::start", &msg);
+            msg
+        })?;
+    http_log(&db_path, "INFO", "rust:http_server::start",
+        &format!("LAN 上传服务已启动: http://{}", addr));
     println!("[HTTP] LAN 上传服务已启动: http://{}", addr);
     axum::serve(listener, router)
         .await

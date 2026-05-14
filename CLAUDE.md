@@ -132,6 +132,7 @@ Window manipulation permissions: minimize, maximize, toggle-maximize, close, is-
 
 ## Project Conventions
 
+- **Ant Design Vue 严格规范**: 所有 UI 必须使用 antd 组件，严禁使用原生 HTML 表单/媒体/排版元素。写模板前通过 antd MCP 查对应组件（`mcp__antd__antd_list` 列出全部，`mcp__antd__antd_doc` 查用法）。`<div>` 和结构性 `<span>` 除外。
 - TypeScript `strict: true`, `noUnusedLocals: true`, `noUnusedParameters: true`.
 - No linter or formatter is configured (no ESLint, Prettier, or rustfmt overrides).
 - `.gitignore` excludes `.claude/` — local Claude settings won't be committed.

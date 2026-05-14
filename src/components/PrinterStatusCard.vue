@@ -22,7 +22,7 @@ onMounted(() => {
       </Button>
     </div>
 
-    <Empty v-if="printerList.printers.length === 0 && !printerList.loading" description="未发现打印机" :image-style="{ height: '40px' }" />
+    <Empty v-if="printerList.printers.length === 0 && !printerList.loading" :image="Empty.PRESENTED_IMAGE_SIMPLE" description="未发现打印机" :image-style="{ height: '30px' }" />
 
     <div v-else class="printer-list">
       <div v-for="name in printerList.printers" :key="name" class="printer-item">
@@ -42,6 +42,7 @@ onMounted(() => {
   border-radius: 8px;
   padding: 10px 12px;
   background: #fff;
+  overflow: hidden;
 }
 
 .printer-header {

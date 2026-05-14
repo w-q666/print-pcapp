@@ -1,6 +1,7 @@
 import { watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { useWebSocket } from './useWebSocket'
+import { useLogger } from './useLogger'
 import { usePrintTask } from '../stores/print-task'
 import { usePrinterList } from '../stores/printer-list'
 import { useAppConfig } from '../stores/app-config'
@@ -25,6 +26,7 @@ export function usePrintService() {
   const printTask = usePrintTask()
   const printerList = usePrinterList()
   const appConfig = useAppConfig()
+  const logger = useLogger('frontend:usePrintService')
 
   watch(() => wsClient.status.value, (newStatus) => {
     if (newStatus !== 'idle' && newStatus !== 'connecting' && newStatus !== 'connected') {
@@ -38,18 +40,21 @@ export function usePrintService() {
       return wsClient.sessionId.value
     }
 
+    logger.debug('print', `WebSocket connecting: ${appConfig.wsUrl}`)
     wsClient.connect(appConfig.wsUrl)
 
     return new Promise<string>((resolve, reject) => {
       const timeout = setTimeout(() => {
         unwatch()
-        reject(new Error('WebSocket 连뿯掽뿯붿뿯施'))
+        logger.error('print', `WebSocket connect timeout (10s): ${appConfig.wsUrl}`)
+        reject(new Error('WebSocket connect timeout'))
       }, 10000)
 
       const unwatch = watch(() => wsClient.sessionId.value, (id) => {
         if (id) {
           clearTimeout(timeout)
           unwatch()
+          logger.debug('print', `WebSocket connected, sessionId: ${id}`)
           resolve(id)
         }
       }, { immediate: true })
@@ -57,6 +62,7 @@ export function usePrintService() {
   }
 
   async function print(params: PrintParams) {
+    logger.info('print', `print start: ${params.fileName} (type: ${params.type}, source: ${params.source})`)
     printTask.updateStatus('connecting')
     printTask.currentJobName = params.fileName
 
@@ -95,12 +101,15 @@ export function usePrintService() {
       filePath: params.filePath || '',
       fileSize: 0,
     })
+    logger.debug('print', `print job record created: ${params.fileName}`)
 
     const result = await printSingle(req)
     if (result.code !== 0) {
+      logger.error('print', `print failed: ${params.fileName} - ${result.msg}`)
       printTask.updateStatus('error', result.msg)
       throw new Error(result.msg)
     }
+    logger.info('print', `print submitted: ${params.fileName}`)
   }
 
   return { print, ensureConnected }

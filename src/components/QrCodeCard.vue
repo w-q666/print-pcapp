@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Card, Button, message } from 'ant-design-vue'
+import { Card, Button, Image, message } from 'ant-design-vue'
 import { CopyOutlined, QrcodeOutlined } from '@ant-design/icons-vue'
 import { invoke } from '@tauri-apps/api/core'
 
@@ -42,10 +42,11 @@ onMounted(loadData)
       <QrcodeOutlined style="margin-right: 8px" />手机投印
     </template>
     <div v-if="!loading" class="qr-card-body">
-      <img
+      <Image
         v-if="qrBase64"
         :src="`data:image/png;base64,${qrBase64}`"
         alt="QR Code"
+        :preview="false"
         class="qr-image"
       />
       <div v-if="lanUrl" class="qr-url-row">

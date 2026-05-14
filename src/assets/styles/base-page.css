@@ -19,10 +19,12 @@
 }
 
 .base-page-title {
-  font-size: 15px;
+  font-size: 15px !important;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0;
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+  line-height: 1.4 !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

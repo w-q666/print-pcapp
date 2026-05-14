@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { Button } from 'ant-design-vue'
+import { MinusOutlined, BorderOutlined, SwitcherOutlined, CloseOutlined } from '@ant-design/icons-vue'
 
 const isMaximized = ref(false)
 let unlisten: (() => void) | null = null
@@ -34,25 +36,18 @@ async function handleClose() {
   <div class="titlebar">
     <div class="titlebar-drag" data-tauri-drag-region />
     <div class="titlebar-controls">
-      <button class="titlebar-btn" @click="handleMinimize" title="最小化">
-        <svg viewBox="0 0 16 16" fill="none">
-          <path d="M3 8h10" stroke="currentColor" stroke-width="1.2" />
-        </svg>
-      </button>
-      <button class="titlebar-btn" @click="handleToggleMaximize" :title="isMaximized ? '还原' : '最大化'">
-        <svg v-if="!isMaximized" viewBox="0 0 16 16" fill="none">
-          <rect x="3" y="3" width="10" height="10" rx="1" stroke="currentColor" stroke-width="1.2" />
-        </svg>
-        <svg v-else viewBox="0 0 16 16" fill="none">
-          <rect x="5" y="2" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.2" />
-          <path d="M3 5v7a1 1 0 001 1h7" stroke="currentColor" stroke-width="1.2" />
-        </svg>
-      </button>
-      <button class="titlebar-btn titlebar-btn--close" @click="handleClose" title="关闭">
-        <svg viewBox="0 0 16 16" fill="none">
-          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.2" />
-        </svg>
-      </button>
+      <Button type="text" class="titlebar-btn" @click="handleMinimize" title="最小化">
+        <template #icon><MinusOutlined /></template>
+      </Button>
+      <Button type="text" class="titlebar-btn" @click="handleToggleMaximize" :title="isMaximized ? '还原' : '最大化'">
+        <template #icon>
+          <BorderOutlined v-if="!isMaximized" />
+          <SwitcherOutlined v-else />
+        </template>
+      </Button>
+      <Button type="text" class="titlebar-btn titlebar-btn--close" @click="handleClose" title="关闭">
+        <template #icon><CloseOutlined /></template>
+      </Button>
     </div>
   </div>
 </template>

@@ -1,12 +1,17 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { Menu, MenuItem, Button } from 'ant-design-vue'
 import {
   FolderOutlined, PrinterOutlined, HistoryOutlined,
   FileTextOutlined, SettingOutlined,
-  MenuFoldOutlined,
+  MenuFoldOutlined, MenuUnfoldOutlined,
 } from '@ant-design/icons-vue'
-import NavItem from './NavItem.vue'
 import ServiceStatus from './ServiceStatus.vue'
 import OfflineAlert from './OfflineAlert.vue'
+
+const router = useRouter()
+const route = useRoute()
 
 defineProps<{
   collapsed: boolean
@@ -16,6 +21,11 @@ defineProps<{
 const emit = defineEmits<{
   toggle: []
 }>()
+
+const selectedKeys = computed(() => {
+  const name = route.name as string
+  return name ? [name] : ['files']
+})
 
 const mainItems = [
   { key: 'files',   path: '/files',   icon: FolderOutlined,   label: '文件管理' },
@@ -27,49 +37,71 @@ const mainItems = [
 const bottomItems = [
   { key: 'settings', path: '/settings', icon: SettingOutlined, label: '系统配置' },
 ]
+
+function handleMenuClick(info: { key: string | number }) {
+  const allItems = [...mainItems, ...bottomItems]
+  const item = allItems.find(i => i.key === String(info.key))
+  if (item) {
+    router.push(item.path)
+  }
+}
 </script>
 
 <template>
-  <nav class="nav-sidebar" :class="{ 'nav-collapsed': collapsed }">
+  <div class="nav-sidebar" :class="{ 'nav-collapsed': collapsed }">
     <div class="nav-logo">
       <PrinterOutlined class="nav-logo-icon" />
       <span class="nav-logo-text">网络打印服务</span>
     </div>
 
-    <div class="nav-menu">
-      <NavItem
-        v-for="item in mainItems"
-        :key="item.key"
-        :icon="item.icon"
-        :label="item.label"
-        :to="item.path"
-        :collapsed="collapsed"
-      />
-    </div>
+    <Menu
+      :selectedKeys="selectedKeys"
+      mode="inline"
+      :inline-collapsed="collapsed"
+      class="nav-menu"
+      @click="handleMenuClick"
+    >
+      <MenuItem v-for="item in mainItems" :key="item.key">
+        <template #icon>
+          <component :is="item.icon" />
+        </template>
+        {{ item.label }}
+      </MenuItem>
+    </Menu>
 
     <OfflineAlert class="nav-offline-alert" />
 
     <div class="nav-bottom">
-      <NavItem
-        v-for="item in bottomItems"
-        :key="item.key"
-        :icon="item.icon"
-        :label="item.label"
-        :to="item.path"
-        :collapsed="collapsed"
-      />
-      <button
+      <Menu
+        :selectedKeys="selectedKeys"
+        mode="inline"
+        :inline-collapsed="collapsed"
+        class="nav-bottom-menu"
+        @click="handleMenuClick"
+      >
+        <MenuItem v-for="item in bottomItems" :key="item.key">
+          <template #icon>
+            <component :is="item.icon" />
+          </template>
+          {{ item.label }}
+        </MenuItem>
+      </Menu>
+      <Button
         v-if="canToggle"
+        type="text"
         class="nav-collapse-btn"
         @click="emit('toggle')"
         :title="collapsed ? '展开侧边栏' : '折叠侧边栏'"
       >
-        <MenuFoldOutlined />
-      </button>
+        <template #icon>
+          <MenuUnfoldOutlined v-if="collapsed" />
+          <MenuFoldOutlined v-else />
+        </template>
+      </Button>
     </div>
 
     <div class="nav-status">
       <ServiceStatus :collapsed="collapsed" />
     </div>
-  </nav>
+  </div>
 </template>

@@ -106,89 +106,33 @@
   justify-content: center;
   width: 100%;
   height: 28px;
-  border: none;
-  background: transparent;
   color: var(--text-secondary);
-  cursor: pointer;
   border-radius: var(--radius-sm);
-  transition: background var(--transition-fast), color var(--transition-fast);
   margin-bottom: 2px;
 }
 
 .nav-collapse-btn:hover {
-  background: var(--hover-bg);
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
+  background: var(--hover-bg) !important;
 }
 
-.nav-collapse-btn svg {
-  transition: transform var(--transition-normal);
+/* antd Menu overrides */
+.nav-menu.ant-menu {
+  border-inline-end: none !important;
+  background: transparent;
 }
 
-.nav-collapsed .nav-collapse-btn svg {
-  transform: rotate(180deg);
+.nav-menu.ant-menu-inline-collapsed {
+  width: 100%;
 }
 
-/* Nav item */
-.nav-item {
-  display: flex;
-  align-items: center;
-  height: 36px;
-  padding: 0 10px;
-  gap: 8px;
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
-  text-decoration: none;
-  overflow: hidden;
-  white-space: nowrap;
-  margin-bottom: 1px;
+.nav-bottom-menu.ant-menu {
+  border-inline-end: none !important;
+  background: transparent;
 }
 
-.nav-item:hover {
-  background: var(--hover-bg);
-  color: var(--text-primary);
-}
-
-.nav-item--active {
-  background: var(--primary-color);
-  color: #fff;
-}
-
-.nav-item--active:hover {
-  background: var(--primary-color-hover);
-  color: #fff;
-}
-
-.nav-item-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  font-size: 16px;
-}
-
-.nav-item-label {
-  font-size: 13px;
-  font-weight: 500;
-  opacity: 1;
-  transition: opacity var(--transition-normal);
-  overflow: hidden;
-}
-
-.nav-collapsed .nav-item {
-  justify-content: center;
-  padding: 0;
-  height: 36px;
-  width: 36px;
-  margin: 1px auto;
-}
-
-.nav-collapsed .nav-item-label {
-  opacity: 0;
-  width: 0;
+.nav-bottom-menu.ant-menu-inline-collapsed {
+  width: 100%;
 }
 
 /* Offline alert — centered between nav-menu and nav-bottom */

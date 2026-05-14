@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Tabs } from 'ant-design-vue'
+import { Tabs, TypographyTitle } from 'ant-design-vue'
 import {
   FolderOutlined, PrinterOutlined, HistoryOutlined,
   SettingOutlined, FileTextOutlined,
@@ -38,7 +38,7 @@ function onTabChange(key: string | number) {
   <div class="mobile-layout">
     <PrintStatusOverlay />
     <div class="mobile-header">
-      <h3 style="margin: 0;">{{ route.meta.title }}</h3>
+      <TypographyTitle :level="3" style="margin: 0;">{{ route.meta.title }}</TypographyTitle>
     </div>
     <div class="mobile-content">
       <router-view />

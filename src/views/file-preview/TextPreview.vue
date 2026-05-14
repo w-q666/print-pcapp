@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
+import { TypographyParagraph } from 'ant-design-vue'
 import { useFileSystem } from '../../composables/useFileSystem'
 
 const props = defineProps<{ fileName: string }>()
@@ -33,7 +34,7 @@ onMounted(load)
       <a-spin tip="加载中..." />
     </div>
     <div v-else-if="error" class="preview-error">{{ error }}</div>
-    <pre v-else class="text-content">{{ content }}</pre>
+    <TypographyParagraph v-else class="text-content" code>{{ content }}</TypographyParagraph>
   </div>
 </template>
 
@@ -46,14 +47,19 @@ onMounted(load)
 .text-content {
   margin: 0;
   padding: 16px;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-all;
-  background: #fafafa;
   border-radius: 6px;
-  border: 1px solid #f0f0f0;
+}
+
+.text-content :deep(code) {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  background: transparent;
+  border: none;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .preview-loading, .preview-error {

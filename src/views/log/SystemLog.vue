@@ -1,20 +1,25 @@
 <script setup lang="ts">
 import { onMounted, ref, watch, nextTick } from 'vue'
-import { Select, SelectOption, Input, Button, Switch, Tag, Space } from 'ant-design-vue'
-import { ReloadOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import { invoke } from '@tauri-apps/api/core'
+import { save } from '@tauri-apps/plugin-dialog'
+import { Select, SelectOption, Input, Button, Switch, Tag, Space, message } from 'ant-design-vue'
+import { ReloadOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons-vue'
 import BasePage from '../../components/layout/BasePage.vue'
 import { useSystemLog } from '../../stores/system-log'
 
 const store = useSystemLog()
 const autoScroll = ref(true)
 const logContainer = ref<HTMLDivElement | null>(null)
+const exporting = ref(false)
 
 const categories = [
   { key: null, label: '全部', color: '' },
-  { key: 'service', label: '服务', color: 'blue' },
+  { key: 'system', label: '系统', color: 'purple' },
   { key: 'print', label: '打印', color: 'green' },
   { key: 'upload', label: '上传', color: 'orange' },
-  { key: 'system', label: '系统', color: 'purple' },
+  { key: 'http', label: 'HTTP', color: 'blue' },
+  { key: 'file', label: '文件', color: 'cyan' },
+  { key: 'error', label: '错误', color: 'red' },
 ]
 
 const levels = [
@@ -65,8 +70,37 @@ function levelColor(level: string): string {
   }
 }
 
-function formatLogLine(log: { timestamp: string; level: string; category: string; message: string }): string {
-  return `[${log.timestamp}] [${log.level.padEnd(5)}] [${log.category}] ${log.message}`
+function formatLogLine(log: { timestamp: string; level: string; category: string; logger: string; message: string }): string {
+  const src = log.logger ? ` [${log.logger}]` : ''
+  return `[${log.timestamp}] [${log.level.padEnd(5)}] [${log.category}]${src} ${log.message}`
+}
+
+function padTimestamp(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+async function handleExport() {
+  exporting.value = true
+  try {
+    const now = new Date()
+    const defaultName = `系统日志_${now.getFullYear()}-${padTimestamp(now.getMonth() + 1)}-${padTimestamp(now.getDate())}_${padTimestamp(now.getHours())}${padTimestamp(now.getMinutes())}${padTimestamp(now.getSeconds())}.csv`
+    const path = await save({
+      defaultPath: defaultName,
+      filters: [{ name: 'CSV', extensions: ['csv'] }],
+    })
+    if (!path) return
+    const count = await invoke<number>('log_export_csv', {
+      path,
+      level: store.filterLevel || null,
+      category: store.filterCategory || null,
+      keyword: store.filterKeyword || null,
+    })
+    message.success(`导出完成，共 ${count} 条记录`)
+  } catch (e) {
+    message.error(`导出失败: ${e}`)
+  } finally {
+    exporting.value = false
+  }
 }
 
 onMounted(() => {
@@ -124,6 +158,10 @@ onMounted(() => {
       </Select>
 
       <Button type="primary" @click="handleSearch">查询</Button>
+      <Button @click="handleExport" :loading="exporting">
+        <template #icon><DownloadOutlined /></template>
+        导出 CSV
+      </Button>
       <Button danger @click="store.clearLogs()">
         <template #icon><DeleteOutlined /></template>
         清空

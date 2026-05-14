@@ -1,4 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
+import { useLogger } from './useLogger'
+
+const logger = useLogger('frontend:useFileSystem')
 
 export interface FileInfo {
   name: string
@@ -8,19 +11,46 @@ export interface FileInfo {
 
 export function useFileSystem() {
   async function saveFile(name: string, bytes: Uint8Array): Promise<string> {
-    return invoke<string>('file_save', { name, bytes: Array.from(bytes) })
+    try {
+      const result = await invoke<string>('file_save', { name, bytes: Array.from(bytes) })
+      logger.info('file', `file saved: ${name} (${(bytes.length / 1024).toFixed(2)} KB)`)
+      return result
+    } catch (err) {
+      logger.error('file', `file save failed: ${name} - ${err}`)
+      throw err
+    }
   }
 
   async function readFile(name: string): Promise<string> {
-    return invoke<string>('file_read', { name })
+    try {
+      const result = await invoke<string>('file_read', { name })
+      logger.debug('file', `file read: ${name}`)
+      return result
+    } catch (err) {
+      logger.error('file', `file read failed: ${name} - ${err}`)
+      throw err
+    }
   }
 
   async function deleteFile(name: string): Promise<void> {
-    return invoke<void>('file_delete', { name })
+    try {
+      await invoke<void>('file_delete', { name })
+      logger.info('file', `file deleted: ${name}`)
+    } catch (err) {
+      logger.error('file', `file delete failed: ${name} - ${err}`)
+      throw err
+    }
   }
 
   async function listFiles(): Promise<FileInfo[]> {
-    return invoke<FileInfo[]>('file_list')
+    try {
+      const files = await invoke<FileInfo[]>('file_list')
+      logger.debug('file', `file list: ${files.length} files`)
+      return files
+    } catch (err) {
+      logger.error('file', `file list failed: ${err}`)
+      throw err
+    }
   }
 
   function base64ToBlobUrl(base64: string, mimeType: string): string {
