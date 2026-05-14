@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import { Store } from "@tauri-apps/plugin-store";
 
 const greetMsg = ref("");
 const name = ref("");
@@ -9,6 +10,37 @@ async function greet() {
   // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
   greetMsg.value = await invoke("greet", { name: name.value });
 }
+
+// 验证 tauri-plugin-store
+onMounted(async () => {
+  const store = await Store.load("settings.json");
+  await store.set("lastOpen", new Date().toISOString());
+  const val = await store.get("lastOpen");
+  console.log("[store] lastOpen:", val);
+
+  // 验证 file commands
+  try {
+    await invoke("file_save", { name: "test.txt", bytes: Array.from(new TextEncoder().encode("hello")) });
+    const files: string[] = await invoke("file_list");
+    console.log("[files] list:", files);
+    const content: string = await invoke("file_read", { name: "test.txt" });
+    console.log("[files] read test.txt:", content);
+  } catch (e) {
+    console.error("[files] error:", e);
+  }
+
+  // 验证 print_jobs commands
+  try {
+    const job: any = await invoke("print_jobs_create", { name: "测试打印任务" });
+    console.log("[db] created:", job);
+    const jobs: any[] = await invoke("print_jobs_list");
+    console.log("[db] list:", jobs);
+    await invoke("print_jobs_delete", { id: job.id });
+    console.log("[db] deleted, remaining:", (await invoke("print_jobs_list") as any[]).length);
+  } catch (e) {
+    console.error("[db] error:", e);
+  }
+});
 </script>
 
 <template>
