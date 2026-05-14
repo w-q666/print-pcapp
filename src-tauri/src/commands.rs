@@ -167,7 +167,7 @@ pub fn file_delete(app_handle: AppHandle, name: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn file_list(app_handle: AppHandle) -> Result<Vec<String>, String> {
+pub fn file_list(app_handle: AppHandle) -> Result<Vec<crate::entities::FileInfo>, String> {
     let data_dir = app_handle
         .path()
         .app_data_dir()
@@ -176,13 +176,26 @@ pub fn file_list(app_handle: AppHandle) -> Result<Vec<String>, String> {
     if !files_dir.exists() {
         return Ok(Vec::new());
     }
-    let mut names = Vec::new();
+    let mut files = Vec::new();
     let entries = fs::read_dir(&files_dir).map_err(|e| e.to_string())?;
     for entry in entries {
         let entry = entry.map_err(|e| e.to_string())?;
         if entry.file_type().map_err(|e| e.to_string())?.is_file() {
-            names.push(entry.file_name().to_string_lossy().to_string());
+            let name = entry.file_name().to_string_lossy().to_string();
+            let meta = entry.metadata().map_err(|e| e.to_string())?;
+            let size = meta.len();
+            let modified_at = meta
+                .modified()
+                .ok()
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
+            files.push(crate::entities::FileInfo {
+                name,
+                size,
+                modified_at,
+            });
         }
     }
-    Ok(names)
+    Ok(files)
 }

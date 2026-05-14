@@ -44,3 +44,10 @@ pub struct LogQuery {
     pub keyword: Option<String>,
     pub limit: Option<i64>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileInfo {
+    pub name: String,
+    pub size: u64,
+    pub modified_at: u64,
+}
