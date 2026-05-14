@@ -3,6 +3,10 @@
     "antd": {
       "command": "antd",
       "args": ["mcp"]
+    },
+    "antd-components": {
+      "command": "npx",
+      "args": ["-y", "@jzone-mcp/antd-components-mcp"]
     }
   }
 }
