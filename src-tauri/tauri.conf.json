@@ -12,9 +12,12 @@
   "app": {
     "windows": [
       {
-        "title": "print",
-        "width": 800,
-        "height": 600
+        "title": "网络打印服务",
+        "width": 900,
+        "height": 620,
+        "minWidth": 680,
+        "minHeight": 480,
+        "decorations": false
       }
     ],
     "security": {

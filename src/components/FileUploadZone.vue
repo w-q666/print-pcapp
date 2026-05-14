@@ -11,10 +11,9 @@ const fileBrowser = useFileBrowser()
 const uploading = ref(false)
 
 const acceptExtensions = [
-  ...fileCategories.document,
-  ...fileCategories.spreadsheet,
-  ...fileCategories.presentation,
+  ...fileCategories.pdf,
   ...fileCategories.image,
+  ...fileCategories.text,
 ].join(',')
 
 function beforeUpload(file: File) {
@@ -53,35 +52,40 @@ async function handleUpload(file: File) {
   >
     <div class="upload-content">
       <CloudUploadOutlined class="upload-icon" />
-      <p class="upload-title">拖拽文件到此处或点击选择文件</p>
-      <p class="upload-hint">支持 PDF, Word, Excel, 图片, 文本, HTML 等多种格式</p>
+      <p class="upload-title">拖拽文件到此处或点击选择</p>
+      <p class="upload-hint">支持 PDF、图片、纯文本、HTML</p>
     </div>
   </UploadDragger>
 </template>
 
 <style scoped>
 .upload-zone {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+}
+
+.upload-zone :deep(.ant-upload-drag) {
+  padding: 0 !important;
 }
 
 .upload-content {
-  padding: 32px 0;
+  padding: 16px 0;
 }
 
 .upload-icon {
-  font-size: 48px;
-  color: var(--ant-color-primary, #1677ff);
-  margin-bottom: 16px;
-}
-
-.upload-title {
-  font-size: 16px;
-  color: rgba(0, 0, 0, 0.85);
+  font-size: 32px;
+  color: var(--primary-color, #1677ff);
   margin-bottom: 8px;
 }
 
-.upload-hint {
+.upload-title {
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-primary, rgba(0, 0, 0, 0.85));
+  margin-bottom: 4px;
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: var(--text-secondary, rgba(0, 0, 0, 0.45));
+  margin: 0;
 }
 </style>

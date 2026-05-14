@@ -2,6 +2,7 @@
 import { ref, markRaw } from 'vue'
 import { Tabs, Button, message } from 'ant-design-vue'
 import { SaveOutlined } from '@ant-design/icons-vue'
+import BasePage from '../../components/layout/BasePage.vue'
 import { useSettings } from '../../stores/settings'
 import FileFormatTab from './FileFormatTab.vue'
 import PrintSettingsTab from './PrintSettingsTab.vue'
@@ -31,30 +32,22 @@ async function handleSave() {
 </script>
 
 <template>
-  <div class="settings-page">
-    <div class="settings-header">
-      <h2 style="margin: 0">系统配置</h2>
+  <BasePage title="系统配置">
+    <template #actions>
       <Button type="primary" :loading="saving" @click="handleSave">
         <template #icon><SaveOutlined /></template>
         保存配置
       </Button>
+    </template>
+
+    <div class="settings-content">
+      <Tabs
+        v-model:activeKey="activeTab"
+        :items="tabItems.map(t => ({ key: t.key, label: t.label }))"
+        size="small"
+      />
+      <component :is="tabItems.find(t => t.key === activeTab)?.component" />
     </div>
-    <Tabs
-      v-model:activeKey="activeTab"
-      :items="tabItems.map(t => ({ key: t.key, label: t.label }))"
-      style="margin-top: 8px"
-    />
-    <component :is="tabItems.find(t => t.key === activeTab)?.component" />
-  </div>
+  </BasePage>
 </template>
 
-<style scoped>
-.settings-page {
-  padding: 16px 24px;
-}
-.settings-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-</style>

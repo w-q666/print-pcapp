@@ -2,6 +2,7 @@
 import { onMounted, computed, h } from 'vue'
 import { Table, Tag, Select, SelectOption, Button, Space } from 'ant-design-vue'
 import { ReloadOutlined, DownloadOutlined } from '@ant-design/icons-vue'
+import BasePage from '../../components/layout/BasePage.vue'
 import { usePrintHistory } from '../../stores/print-history'
 import { exportCSV } from '../../utils/export-csv'
 import type { TableColumnType as ColumnType } from 'ant-design-vue'
@@ -51,14 +52,12 @@ const columns = computed<ColumnType[]>(() => [
   },
 ])
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function handleStatusChange(val: any) {
-  store.filterStatus = val || null
+function handleStatusChange(val: unknown) {
+  store.filterStatus = (val as string) || null
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function handlePrinterChange(val: any) {
-  store.filterPrinter = val || null
+function handlePrinterChange(val: unknown) {
+  store.filterPrinter = (val as string) || null
 }
 
 function handleExportCSV() {
@@ -83,9 +82,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="print-history-page">
-    <div class="history-header">
-      <h2 style="margin: 0">打印历史</h2>
+  <BasePage title="打印历史">
+    <template #actions>
       <Space>
         <Select
           :value="store.filterStatus || ''"
@@ -119,7 +117,7 @@ onMounted(() => {
 
         <Button @click="handleExportCSV">
           <template #icon><DownloadOutlined /></template>
-          导出 CSV
+          导出
         </Button>
 
         <Button @click="store.fetchRecords()" :loading="store.loading">
@@ -127,29 +125,19 @@ onMounted(() => {
           刷新
         </Button>
       </Space>
-    </div>
+    </template>
 
-    <Table
-      :columns="columns"
-      :data-source="store.filteredRecords"
-      :loading="store.loading"
-      row-key="id"
-      :scroll="{ x: 1000 }"
-      :pagination="{ pageSize: 20, showSizeChanger: true, showTotal: (total: number) => `共 ${total} 条` }"
-      style="margin-top: 16px"
-    />
-  </div>
+    <div class="history-content">
+      <Table
+        :columns="columns"
+        :data-source="store.filteredRecords"
+        :loading="store.loading"
+        row-key="id"
+        size="small"
+        :scroll="{ x: 900 }"
+        :pagination="{ pageSize: 20, showSizeChanger: true, showTotal: (total: number) => `共 ${total} 条` }"
+      />
+    </div>
+  </BasePage>
 </template>
 
-<style scoped>
-.print-history-page {
-  padding: 16px 24px;
-}
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-</style>

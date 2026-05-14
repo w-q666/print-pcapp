@@ -14,6 +14,12 @@ const router = createRouter({
       meta: { title: '文件管理', icon: 'FolderOutlined' },
     },
     {
+      path: '/print',
+      name: 'print',
+      component: () => import('../views/print/PrintQueue.vue'),
+      meta: { title: '打印任务', icon: 'PrinterOutlined' },
+    },
+    {
       path: '/history',
       name: 'history',
       component: () => import('../views/history/PrintHistory.vue'),

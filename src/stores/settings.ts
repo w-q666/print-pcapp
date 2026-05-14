@@ -6,27 +6,22 @@ export interface ExtensionMap {
 }
 
 export interface AllowedExtensions {
-  document: ExtensionMap
-  spreadsheet: ExtensionMap
-  presentation: ExtensionMap
+  pdf: ExtensionMap
   image: ExtensionMap
+  text: ExtensionMap
 }
 
 export const useSettings = defineStore('settings', () => {
   const allowedExtensions: AllowedExtensions = reactive({
-    document: {
-      '.htm': true, '.html': true, '.txt': true, '.doc': true,
-      '.rtf': true, '.pdf': true, '.docx': true, '.xml': true, '.odt': true,
-    },
-    spreadsheet: {
-      '.ods': true, '.csv': true, '.xlsx': true, '.xls': true,
-    },
-    presentation: {
-      '.pptx': true, '.odp': true, '.ppt': true,
+    pdf: {
+      '.pdf': true,
     },
     image: {
-      '.tiff': true, '.png': true, '.webp': true, '.gif': true,
-      '.jpeg': true, '.svg': true, '.jpg': true, '.bmp': true,
+      '.jpg': true, '.jpeg': true, '.png': true, '.gif': true,
+      '.bmp': true, '.tiff': true, '.webp': true,
+    },
+    text: {
+      '.txt': true, '.htm': true, '.html': true,
     },
   })
 

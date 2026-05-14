@@ -2,7 +2,10 @@
 import { computed, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Tabs } from 'ant-design-vue'
-import { FolderOutlined, HistoryOutlined, SettingOutlined, FileTextOutlined } from '@ant-design/icons-vue'
+import {
+  FolderOutlined, PrinterOutlined, HistoryOutlined,
+  SettingOutlined, FileTextOutlined,
+} from '@ant-design/icons-vue'
 import PrintStatusOverlay from '../views/print/PrintStatusOverlay.vue'
 
 const router = useRouter()
@@ -12,6 +15,7 @@ const activeKey = computed(() => route.name as string)
 
 const tabItemDefs = [
   { key: 'files', label: '文件', icon: FolderOutlined },
+  { key: 'print', label: '打印', icon: PrinterOutlined },
   { key: 'history', label: '历史', icon: HistoryOutlined },
   { key: 'log', label: '日志', icon: FileTextOutlined },
   { key: 'settings', label: '设置', icon: SettingOutlined },
@@ -56,19 +60,22 @@ function onTabChange(key: string | number) {
   flex-direction: column;
   height: 100vh;
 }
+
 .mobile-header {
   padding: 12px 16px;
-  background: var(--ant-color-bg-container, #fff);
-  border-bottom: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+  background: var(--bg-primary, #fff);
+  border-bottom: 1px solid var(--border-color, #e8e8ec);
 }
+
 .mobile-content {
   flex: 1;
   overflow: auto;
 }
+
 .mobile-tabs {
   position: sticky;
   bottom: 0;
-  background: var(--ant-color-bg-container, #fff);
-  border-top: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+  background: var(--bg-primary, #fff);
+  border-top: 1px solid var(--border-color, #e8e8ec);
 }
 </style>

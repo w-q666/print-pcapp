@@ -103,20 +103,22 @@ pub fn log_clear(state: tauri::State<'_, AppState>) -> Result<(), String> {
 // ── LAN server commands ──
 
 #[tauri::command]
-pub fn lan_server_url(port: Option<u16>) -> Result<String, String> {
+pub fn lan_server_url(
+    lan_token: tauri::State<'_, crate::LanServerToken>,
+    port: Option<u16>,
+) -> Result<String, String> {
     let ip = crate::network::get_local_ip()?;
     let p = port.unwrap_or(5000);
-    Ok(format!("http://{}:{}", ip, p))
+    Ok(format!("http://{}:{}?token={}", ip, p, lan_token.0))
 }
 
 #[tauri::command]
-pub fn lan_server_qrcode(port: Option<u16>, token: Option<String>) -> Result<String, String> {
-    let url = lan_server_url(port)?;
-    let full_url = match token {
-        Some(t) => format!("{}?token={}", url, t),
-        None => url,
-    };
-    crate::qr::generate_qr_base64(&full_url)
+pub fn lan_server_qrcode(
+    lan_token: tauri::State<'_, crate::LanServerToken>,
+    port: Option<u16>,
+) -> Result<String, String> {
+    let url = lan_server_url(lan_token, port)?;
+    crate::qr::generate_qr_base64(&url)
 }
 
 // ── File commands ──

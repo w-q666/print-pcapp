@@ -3,8 +3,8 @@ export type PrintableType = 'PDF' | 'IMG' | 'TEXT' | 'HTML'
 const typeMap: Record<string, PrintableType> = {
   '.pdf': 'PDF',
   '.jpg': 'IMG', '.jpeg': 'IMG', '.png': 'IMG', '.bmp': 'IMG', '.gif': 'IMG',
-  '.tiff': 'IMG', '.webp': 'IMG', '.svg': 'IMG',
-  '.txt': 'TEXT', '.log': 'TEXT', '.csv': 'TEXT', '.json': 'TEXT', '.xml': 'TEXT',
+  '.tiff': 'IMG', '.webp': 'IMG',
+  '.txt': 'TEXT',
   '.html': 'HTML', '.htm': 'HTML',
 }
 
@@ -31,10 +31,9 @@ export function getPreviewComponent(type: PrintableType): string {
 }
 
 export const fileCategories = {
-  document: ['.htm', '.html', '.txt', '.doc', '.rtf', '.pdf', '.docx', '.xml', '.odt'],
-  spreadsheet: ['.ods', '.csv', '.xlsx', '.xls'],
-  presentation: ['.pptx', '.odp', '.ppt'],
-  image: ['.tiff', '.png', '.webp', '.gif', '.jpeg', '.svg', '.jpg', '.bmp'],
+  pdf: ['.pdf'],
+  image: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp'],
+  text: ['.txt', '.htm', '.html'],
 } as const
 
 export function getMimeType(fileName: string): string {

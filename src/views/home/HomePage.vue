@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Row, Col, Card, Button, Empty, Spin } from 'ant-design-vue'
-import { PrinterOutlined } from '@ant-design/icons-vue'
+import { Card, Button, Empty, Spin } from 'ant-design-vue'
+import { PrinterOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import BasePage from '../../components/layout/BasePage.vue'
 import FileUploadZone from '../../components/FileUploadZone.vue'
 import FileListItem from '../../components/FileListItem.vue'
 import QrCodeCard from '../../components/QrCodeCard.vue'
@@ -39,11 +40,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="home-page">
-    <Row :gutter="16">
-      <Col :xs="24" :lg="16">
-        <FileUploadZone />
+  <BasePage title="文件管理">
+    <template #actions>
+      <Button size="small" @click="fileBrowser.refresh()" :loading="fileBrowser.loading">
+        <template #icon><ReloadOutlined /></template>
+        刷新
+      </Button>
+    </template>
 
+    <div class="home-grid">
+      <div class="home-main">
+        <FileUploadZone />
         <Card title="文件列表" size="small">
           <Spin v-if="fileBrowser.loading" />
           <Empty v-else-if="fileBrowser.sortedFiles.length === 0" description="暂无文件，请上传" />
@@ -66,16 +73,14 @@ onMounted(() => {
             </div>
           </div>
         </Card>
-      </Col>
+      </div>
 
-      <Col :xs="24" :lg="8">
-        <div class="sidebar-stack">
-          <QrCodeCard />
-          <SystemStatusCard />
-          <PrinterStatusCard />
-        </div>
-      </Col>
-    </Row>
+      <div class="home-aside">
+        <QrCodeCard />
+        <SystemStatusCard />
+        <PrinterStatusCard />
+      </div>
+    </div>
 
     <PrintDialog
       v-model:open="printDialogOpen"
@@ -83,12 +88,24 @@ onMounted(() => {
       :file-path="printFilePath"
       @submitted="fileBrowser.refresh()"
     />
-  </div>
+  </BasePage>
 </template>
 
 <style scoped>
-.home-page {
-  padding: 0;
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+}
+
+.home-main {
+  min-width: 0;
+}
+
+.home-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .file-list {
@@ -106,9 +123,9 @@ onMounted(() => {
   flex: 1;
 }
 
-.sidebar-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+@media (max-width: 680px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

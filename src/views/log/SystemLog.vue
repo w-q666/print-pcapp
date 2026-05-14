@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref, watch, nextTick } from 'vue'
 import { Select, SelectOption, Input, Button, Switch, Tag, Space } from 'ant-design-vue'
-import {
-  ReloadOutlined, DeleteOutlined,
-} from '@ant-design/icons-vue'
+import { ReloadOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import BasePage from '../../components/layout/BasePage.vue'
 import { useSystemLog } from '../../stores/system-log'
 
 const store = useSystemLog()
@@ -46,15 +45,13 @@ function handleSearch() {
   store.fetchLogs()
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function handleLevelChange(val: any) {
-  store.filterLevel = val || null
+function handleLevelChange(val: unknown) {
+  store.filterLevel = (val as string) || null
   store.fetchLogs()
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function handleLimitChange(val: any) {
-  store.displayLimit = val
+function handleLimitChange(val: unknown) {
+  store.displayLimit = val as number
   store.fetchLogs()
 }
 
@@ -78,9 +75,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="system-log-page">
-    <div class="log-header">
-      <h2 style="margin: 0">系统日志</h2>
+  <BasePage title="系统日志">
+    <template #actions>
       <Space>
         <Tag
           v-for="cat in categories"
@@ -96,7 +92,7 @@ onMounted(() => {
           刷新
         </Button>
       </Space>
-    </div>
+    </template>
 
     <div class="log-filters">
       <Select
@@ -130,7 +126,7 @@ onMounted(() => {
       <Button type="primary" @click="handleSearch">查询</Button>
       <Button danger @click="store.clearLogs()">
         <template #icon><DeleteOutlined /></template>
-        清空日志
+        清空
       </Button>
     </div>
 
@@ -155,58 +151,48 @@ onMounted(() => {
         暂无日志记录
       </div>
     </div>
-  </div>
+  </BasePage>
 </template>
 
 <style scoped>
-.system-log-page {
-  padding: 16px 24px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-.log-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-}
 .log-filters {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 8px;
 }
+
 .log-viewer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
 }
+
 .log-count {
   font-size: 13px;
-  color: #888;
+  color: var(--text-secondary);
 }
+
 .log-viewer {
   flex: 1;
   min-height: 300px;
-  max-height: calc(100vh - 320px);
   overflow-y: auto;
   background: #1a1a2e;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 12px 16px;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.7;
 }
+
 .log-line {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   color: #e0e0e0;
 }
+
 .log-level-dot {
   flex-shrink: 0;
   width: 8px;
@@ -214,10 +200,12 @@ onMounted(() => {
   border-radius: 50%;
   margin-top: 7px;
 }
+
 .log-text {
   word-break: break-all;
   white-space: pre-wrap;
 }
+
 .log-empty {
   color: #666;
   text-align: center;
