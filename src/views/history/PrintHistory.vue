@@ -1,9 +1,153 @@
 <script setup lang="ts">
+import { onMounted, computed, h } from 'vue'
+import { Table, Tag, Select, SelectOption, Button, Space } from 'ant-design-vue'
+import { ReloadOutlined, DownloadOutlined } from '@ant-design/icons-vue'
+import { usePrintHistory } from '../../stores/print-history'
+import { exportCSV } from '../../utils/export-csv'
+import type { ColumnType } from 'ant-design-vue/es/table'
+
+const store = usePrintHistory()
+
+const statusColorMap: Record<string, string> = {
+  done: 'green',
+  failed: 'red',
+  printing: 'blue',
+  queued: 'orange',
+  cancelled: 'default',
+}
+
+const statusLabelMap: Record<string, string> = {
+  done: '已完成',
+  failed: '失败',
+  printing: '打印中',
+  queued: '排队中',
+  cancelled: '已取消',
+}
+
+const sourceLabelMap: Record<string, string> = {
+  desktop: '桌面端',
+  mobile: '移动端',
+  api: 'API',
+}
+
+const columns = computed<ColumnType[]>(() => [
+  { title: '文件名', dataIndex: 'name', key: 'name', width: 200, ellipsis: true },
+  {
+    title: '状态', dataIndex: 'status', key: 'status', width: 100,
+    customRender: ({ text }: { text: string }) =>
+      h(Tag, { color: statusColorMap[text] || 'default' }, () => statusLabelMap[text] || text),
+  },
+  { title: '打印机', dataIndex: 'printer', key: 'printer', width: 150, ellipsis: true },
+  { title: '类型', dataIndex: 'print_type', key: 'print_type', width: 80 },
+  {
+    title: '来源', dataIndex: 'source', key: 'source', width: 80,
+    customRender: ({ text }: { text: string }) =>
+      h(Tag, { color: text === 'mobile' ? 'cyan' : 'geekblue' }, () => sourceLabelMap[text] || text),
+  },
+  { title: '份数', dataIndex: 'copies', key: 'copies', width: 60, align: 'center' as const },
+  { title: '创建时间', dataIndex: 'created_at', key: 'created_at', width: 160 },
+  { title: '完成时间', dataIndex: 'finished_at', key: 'finished_at', width: 160,
+    customRender: ({ text }: { text: string | null }) => text || '-',
+  },
+])
+
+function handleStatusChange(val: string) {
+  store.filterStatus = val || null
+}
+
+function handlePrinterChange(val: string) {
+  store.filterPrinter = val || null
+}
+
+function handleExportCSV() {
+  const headers = ['文件名', '状态', '打印机', '类型', '来源', '份数', '创建时间', '完成时间']
+  const rows = store.filteredRecords.map(r => [
+    r.name,
+    statusLabelMap[r.status] || r.status,
+    r.printer,
+    r.print_type,
+    sourceLabelMap[r.source] || r.source,
+    String(r.copies),
+    r.created_at,
+    r.finished_at || '',
+  ])
+  const now = new Date().toISOString().slice(0, 10)
+  exportCSV(headers, rows, `print-history-${now}.csv`)
+}
+
+onMounted(() => {
+  store.fetchRecords()
+})
 </script>
 
 <template>
-  <div style="padding: 24px">
-    <h2>打印历史</h2>
-    <p>待实现（Plan 6）</p>
+  <div class="print-history-page">
+    <div class="history-header">
+      <h2 style="margin: 0">打印历史</h2>
+      <Space>
+        <Select
+          :value="store.filterStatus || ''"
+          style="width: 130px"
+          placeholder="状态筛选"
+          @change="handleStatusChange"
+        >
+          <SelectOption value="">全部状态</SelectOption>
+          <SelectOption value="done">已完成</SelectOption>
+          <SelectOption value="printing">打印中</SelectOption>
+          <SelectOption value="queued">排队中</SelectOption>
+          <SelectOption value="failed">失败</SelectOption>
+          <SelectOption value="cancelled">已取消</SelectOption>
+        </Select>
+
+        <Select
+          :value="store.filterPrinter || ''"
+          style="width: 160px"
+          placeholder="打印机筛选"
+          @change="handlePrinterChange"
+        >
+          <SelectOption value="">全部打印机</SelectOption>
+          <SelectOption
+            v-for="p in store.uniquePrinters"
+            :key="p"
+            :value="p"
+          >
+            {{ p }}
+          </SelectOption>
+        </Select>
+
+        <Button @click="handleExportCSV">
+          <template #icon><DownloadOutlined /></template>
+          导出 CSV
+        </Button>
+
+        <Button @click="store.fetchRecords()" :loading="store.loading">
+          <template #icon><ReloadOutlined /></template>
+          刷新
+        </Button>
+      </Space>
+    </div>
+
+    <Table
+      :columns="columns"
+      :data-source="store.filteredRecords"
+      :loading="store.loading"
+      row-key="id"
+      :scroll="{ x: 1000 }"
+      :pagination="{ pageSize: 20, showSizeChanger: true, showTotal: (total: number) => `共 ${total} 条` }"
+      style="margin-top: 16px"
+    />
   </div>
 </template>
+
+<style scoped>
+.print-history-page {
+  padding: 16px 24px;
+}
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+</style>
