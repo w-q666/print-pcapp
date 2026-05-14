@@ -69,7 +69,7 @@ function handleMenuClick(info: { key: string | number }) {
       </MenuItem>
     </Menu>
 
-    <OfflineAlert class="nav-offline-alert" />
+    <OfflineAlert :collapsed="collapsed" class="nav-offline-alert" />
 
     <div class="nav-bottom">
       <Menu

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Button, Popconfirm } from 'ant-design-vue'
+import { Button, Checkbox, Popconfirm } from 'ant-design-vue'
 import { EyeOutlined, DeleteOutlined, PrinterOutlined } from '@ant-design/icons-vue'
 import FileIcon from './FileIcon.vue'
 import { getFileType } from '../utils/file-types'
@@ -9,12 +9,15 @@ const props = defineProps<{
   fileName: string
   fileSize?: number
   fileDate?: string
+  selected?: boolean
+  selectable?: boolean
 }>()
 
 const emit = defineEmits<{
   preview: [name: string]
   delete: [name: string]
   print: [name: string]
+  select: [name: string]
 }>()
 
 const canPreview = computed(() => getFileType(props.fileName) !== null)
@@ -27,8 +30,14 @@ function formatSize(bytes: number): string {
 </script>
 
 <template>
-  <div class="file-list-item">
+  <div class="file-list-item" :class="{ 'file-list-item--selected': selected }">
     <div class="file-info">
+      <Checkbox
+        v-if="selectable"
+        :checked="selected"
+        class="file-checkbox"
+        @change="emit('select', fileName)"
+      />
       <FileIcon :file-name="fileName" />
       <div class="file-text">
         <span class="file-name">{{ fileName }}</span>
@@ -84,6 +93,14 @@ function formatSize(bytes: number): string {
 
 .file-list-item:hover {
   background-color: var(--ant-control-item-bg-hover, #f5f5f5);
+}
+
+.file-list-item--selected {
+  background-color: #e6f4ff;
+}
+
+.file-checkbox {
+  flex-shrink: 0;
 }
 
 .file-info {

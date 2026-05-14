@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { inject, computed, ref } from 'vue'
+import { Tooltip } from 'ant-design-vue'
 import { WarningOutlined, SyncOutlined } from '@ant-design/icons-vue'
 import type { Ref } from 'vue'
+
+defineProps<{
+  collapsed: boolean
+}>()
 
 type Status = 'online' | 'offline' | 'connecting'
 
@@ -34,19 +39,21 @@ const config = computed(() => {
 </script>
 
 <template>
-  <div
-    v-if="config"
-    class="offline-alert"
-    :style="{
-      background: config.bg,
-      borderColor: config.border,
-    }"
-  >
-    <span class="alert-icon" :class="{ 'alert-icon--spin': config.animate }" :style="{ color: config.color }">
-      <component :is="config.icon" />
-    </span>
-    <span class="alert-text" :style="{ color: config.color }">{{ config.text }}</span>
-  </div>
+  <Tooltip v-if="config" :title="collapsed ? config.text : ''" placement="right">
+    <div
+      class="offline-alert"
+      :class="{ 'offline-alert--collapsed': collapsed }"
+      :style="{
+        background: config.bg,
+        borderColor: config.border,
+      }"
+    >
+      <span class="alert-icon" :class="{ 'alert-icon--spin': config.animate }" :style="{ color: config.color }">
+        <component :is="config.icon" />
+      </span>
+      <span v-if="!collapsed" class="alert-text" :style="{ color: config.color }">{{ config.text }}</span>
+    </div>
+  </Tooltip>
 </template>
 
 <style scoped>
@@ -58,6 +65,12 @@ const config = computed(() => {
   padding: 8px 12px;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
+}
+
+.offline-alert--collapsed {
+  justify-content: center;
+  padding: 8px;
+  margin: 4px auto;
 }
 
 .alert-icon {

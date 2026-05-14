@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import * as pdfjsLib from 'pdfjs-dist'
 import { useFileSystem } from '../../composables/useFileSystem'
 
@@ -30,10 +30,11 @@ async function loadPdf() {
     pdfDoc = await pdfjsLib.getDocument({ data }).promise
     totalPages.value = pdfDoc.numPages
     currentPage.value = 1
+    loading.value = false
+    await nextTick()
     await renderPage(1)
   } catch (e) {
     error.value = `PDF 加载失败: ${e}`
-  } finally {
     loading.value = false
   }
 }

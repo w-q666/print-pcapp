@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { Button, Empty, Spin, Modal, RadioGroup, RadioButton, message } from 'ant-design-vue'
-import { ReloadOutlined } from '@ant-design/icons-vue'
+import { Button, Checkbox, Empty, Spin, Modal, Popconfirm, RadioGroup, RadioButton, message } from 'ant-design-vue'
+import { ReloadOutlined, DeleteOutlined, ClearOutlined } from '@ant-design/icons-vue'
 import BasePage from '../../components/layout/BasePage.vue'
 import FileUploadZone from '../../components/FileUploadZone.vue'
 import FileListItem from '../../components/FileListItem.vue'
@@ -41,6 +41,13 @@ function openPrint(name: string) {
   printDialogOpen.value = true
 }
 
+const selectionMode = ref(false)
+
+function toggleSelectionMode() {
+  selectionMode.value = !selectionMode.value
+  if (!selectionMode.value) fileBrowser.clearSelection()
+}
+
 async function handleDelete(name: string) {
   try {
     await fileBrowser.remove(name)
@@ -48,6 +55,33 @@ async function handleDelete(name: string) {
   } catch (e) {
     message.error(`删除失败: ${e}`)
   }
+}
+
+async function handleBatchDelete() {
+  const count = fileBrowser.selected.size
+  try {
+    await fileBrowser.removeSelected()
+    selectionMode.value = false
+    message.success(`已删除 ${count} 个文件`)
+  } catch (e) {
+    message.error(`批量删除失败: ${e}`)
+  }
+}
+
+async function handleClearAll() {
+  const count = fileBrowser.files.length
+  try {
+    await fileBrowser.removeAll()
+    selectionMode.value = false
+    message.success(`已清空 ${count} 个文件`)
+  } catch (e) {
+    message.error(`清空失败: ${e}`)
+  }
+}
+
+function handleSelectAll() {
+  if (fileBrowser.isAllSelected) fileBrowser.clearSelection()
+  else fileBrowser.selectAll()
 }
 
 onMounted(() => {
@@ -58,6 +92,15 @@ onMounted(() => {
 <template>
   <BasePage title="文件管理">
     <template #actions>
+      <Button size="small" :type="selectionMode ? 'primary' : 'default'" ghost @click="toggleSelectionMode">
+        {{ selectionMode ? '取消选择' : '选择' }}
+      </Button>
+      <Popconfirm title="确定清空所有文件？" ok-text="清空" cancel-text="取消" @confirm="handleClearAll">
+        <Button size="small" danger :disabled="fileBrowser.files.length === 0">
+          <template #icon><ClearOutlined /></template>
+          清空
+        </Button>
+      </Popconfirm>
       <Button size="small" @click="fileBrowser.refresh()" :loading="fileBrowser.loading">
         <template #icon><ReloadOutlined /></template>
         刷新
@@ -69,7 +112,24 @@ onMounted(() => {
         <FileUploadZone />
 
         <div class="file-toolbar">
-          <span class="file-count">共 <b>{{ fileBrowser.sortedFiles.length }}</b> 个文件</span>
+          <div class="file-toolbar-left">
+            <Checkbox
+              v-if="selectionMode"
+              :checked="fileBrowser.isAllSelected"
+              :indeterminate="fileBrowser.hasSelection && !fileBrowser.isAllSelected"
+              @change="handleSelectAll"
+            >全选</Checkbox>
+            <span class="file-count">共 <b>{{ fileBrowser.sortedFiles.length }}</b> 个文件</span>
+            <template v-if="selectionMode && fileBrowser.hasSelection">
+              <span class="file-count">· 已选 <b>{{ fileBrowser.selected.size }}</b> 个</span>
+              <Popconfirm title="确定删除选中的文件？" ok-text="删除" cancel-text="取消" @confirm="handleBatchDelete">
+                <Button size="small" type="primary" danger>
+                  <template #icon><DeleteOutlined /></template>
+                  删除选中
+                </Button>
+              </Popconfirm>
+            </template>
+          </div>
           <RadioGroup v-model:value="fileBrowser.sortBy" size="small">
             <RadioButton value="name">按名称</RadioButton>
             <RadioButton value="extension">按类型</RadioButton>
@@ -85,9 +145,12 @@ onMounted(() => {
               :file-name="file.name"
               :file-size="file.size"
               :file-date="file.dateLabel"
+              :selectable="selectionMode"
+              :selected="fileBrowser.selected.has(file.name)"
               @preview="openPreview"
               @delete="handleDelete"
               @print="openPrint"
+              @select="fileBrowser.toggleSelect"
             />
           </div>
         </Spin>
@@ -95,10 +158,8 @@ onMounted(() => {
 
       <div class="home-aside">
         <QrCodeCard />
-        <div class="aside-cards-row">
-          <SystemStatusCard />
-          <PrinterStatusCard />
-        </div>
+        <SystemStatusCard />
+        <PrinterStatusCard />
       </div>
     </div>
 
@@ -145,20 +206,17 @@ onMounted(() => {
   gap: 10px;
 }
 
-.aside-cards-row {
-  display: flex;
-  gap: 8px;
-}
-
-.aside-cards-row > * {
-  flex: 1;
-  min-width: 0;
-}
 
 .file-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.file-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .file-count {
@@ -194,8 +252,5 @@ onMounted(() => {
     min-width: 0;
   }
 
-  .aside-cards-row {
-    flex: 1;
-  }
 }
 </style>

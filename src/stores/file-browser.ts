@@ -6,14 +6,15 @@ export interface FileItem {
   name: string
   extension: string
   size: number
-  modified_at: number  // Unix timestamp seconds
-  dateLabel: string     // Formatted for display
+  modified_at: number
+  dateLabel: string
 }
 
 export const useFileBrowser = defineStore('file-browser', () => {
   const files = ref<FileItem[]>([])
   const loading = ref(false)
   const sortBy = ref<'name' | 'extension'>('name')
+  const selected = ref<Set<string>>(new Set())
 
   const { listFiles, deleteFile } = useFileSystem()
 
@@ -33,6 +34,7 @@ export const useFileBrowser = defineStore('file-browser', () => {
             })
           : '',
       }))
+      selected.value = new Set()
     } finally {
       loading.value = false
     }
@@ -43,6 +45,42 @@ export const useFileBrowser = defineStore('file-browser', () => {
     await refresh()
   }
 
+  async function removeSelected() {
+    const names = [...selected.value]
+    for (const name of names) {
+      await deleteFile(name)
+    }
+    await refresh()
+  }
+
+  async function removeAll() {
+    for (const file of files.value) {
+      await deleteFile(file.name)
+    }
+    await refresh()
+  }
+
+  function toggleSelect(name: string) {
+    const s = new Set(selected.value)
+    if (s.has(name)) s.delete(name)
+    else s.add(name)
+    selected.value = s
+  }
+
+  function selectAll() {
+    selected.value = new Set(files.value.map(f => f.name))
+  }
+
+  function clearSelection() {
+    selected.value = new Set()
+  }
+
+  const isAllSelected = computed(() =>
+    files.value.length > 0 && selected.value.size === files.value.length
+  )
+
+  const hasSelection = computed(() => selected.value.size > 0)
+
   const sortedFiles = computed(() => {
     return [...files.value].sort((a, b) => {
       if (sortBy.value === 'extension') return a.extension.localeCompare(b.extension)
@@ -50,5 +88,10 @@ export const useFileBrowser = defineStore('file-browser', () => {
     })
   })
 
-  return { files, loading, sortBy, sortedFiles, refresh, remove }
+  return {
+    files, loading, sortBy, selected, sortedFiles,
+    isAllSelected, hasSelection,
+    refresh, remove, removeSelected, removeAll,
+    toggleSelect, selectAll, clearSelection,
+  }
 })
