@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>网络打印服务 - 手机上传</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      min-height: 100vh;
+    }
+    header {
+      background: #1677ff;
+      color: #fff;
+      padding: 16px 20px;
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(22, 119, 255, 0.3);
+    }
+    main {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px 16px;
+    }
+    .upload-zone {
+      border: 2px dashed #1677ff;
+      border-radius: 12px;
+      background: #fff;
+      padding: 40px 20px;
+      text-align: center;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .upload-zone.drag-over {
+      background: #e6f4ff;
+      border-color: #0958d9;
+    }
+    .upload-zone svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      color: #1677ff;
+    }
+    .upload-zone p {
+      color: #8c8c8c;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .upload-zone .hint {
+      font-size: 12px;
+      color: #bfbfbf;
+      margin-top: 8px;
+    }
+    .upload-btn {
+      display: inline-block;
+      background: #1677ff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 32px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .upload-btn:active { background: #0958d9; }
+    #fileInput { display: none; }
+    .file-list {
+      margin-top: 20px;
+    }
+    .file-item {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      animation: slideIn 0.2s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .file-item .icon {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .file-item.success .icon { background: #f6ffed; color: #52c41a; }
+    .file-item.error .icon { background: #fff2f0; color: #ff4d4f; }
+    .file-item.uploading .icon { background: #e6f4ff; color: #1677ff; }
+    .file-item .info {
+      flex: 1;
+      min-width: 0;
+    }
+    .file-item .name {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-item .status {
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .file-item.success .status { color: #52c41a; }
+    .file-item.error .status { color: #ff4d4f; }
+    .file-item.uploading .status { color: #1677ff; }
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: #f0f0f0;
+      border-radius: 2px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: #1677ff;
+      border-radius: 2px;
+      transition: width 0.2s;
+    }
+    .error-banner {
+      background: #fff2f0;
+      border: 1px solid #ffccc7;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      color: #ff4d4f;
+      font-size: 14px;
+      display: none;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #bfbfbf;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span>&#128424;</span> 网络打印服务
+  </header>
+  <main>
+    <div class="error-banner" id="errorBanner"></div>
+    <div class="upload-zone" id="uploadZone">
+      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 32V12M24 12L16 20M24 12L32 20" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 32V38C8 39.1 8.9 40 10 40H38C39.1 40 40 39.1 40 38V32" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <p>点击或拖拽文件到此处上传</p>
+      <button class="upload-btn" onclick="document.getElementById('fileInput').click()">选择文件</button>
+      <input type="file" id="fileInput" multiple>
+      <div class="hint">支持常见文档和图片格式</div>
+    </div>
+    <div class="file-list" id="fileList"></div>
+  </main>
+  <div class="footer">文件将发送至局域网内的打印服务</div>
+
+  <script>
+    var token = new URLSearchParams(location.search).get('token') || '';
+    var uploadZone = document.getElementById('uploadZone');
+    var fileInput = document.getElementById('fileInput');
+    var fileList = document.getElementById('fileList');
+    var errorBanner = document.getElementById('errorBanner');
+
+    if (!token) {
+      errorBanner.textContent = '缺少访问令牌，请通过桌面端扫码获取正确链接。';
+      errorBanner.style.display = 'block';
+    }
+
+    uploadZone.addEventListener('click', function(e) {
+      if (e.target === uploadZone || e.target.tagName === 'P' || e.target.tagName === 'SVG' || e.target.tagName === 'path' || e.target.classList.contains('hint')) {
+        fileInput.click();
+      }
+    });
+
+    fileInput.addEventListener('change', function() {
+      handleFiles(fileInput.files);
+      fileInput.value = '';
+    });
+
+    uploadZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadZone.classList.add('drag-over');
+    });
+
+    uploadZone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadZone.classList.remove('drag-over');
+    });
+
+    uploadZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadZone.classList.remove('drag-over');
+      handleFiles(e.dataTransfer.files);
+    });
+
+    function handleFiles(files) {
+      for (var i = 0; i < files.length; i++) {
+        uploadFile(files[i]);
+      }
+    }
+
+    function createFileItem(fileName) {
+      var div = document.createElement('div');
+      div.className = 'file-item uploading';
+      div.innerHTML =
+        '<div class="icon">&#8987;</div>' +
+        '<div class="info">' +
+          '<div class="name">' + escapeHtml(fileName) + '</div>' +
+          '<div class="status">上传中...</div>' +
+          '<div class="progress-bar"><div class="fill" style="width:0%"></div></div>' +
+        '</div>';
+      fileList.prepend(div);
+      return div;
+    }
+
+    function uploadFile(file) {
+      var item = createFileItem(file.name);
+      var progressFill = item.querySelector('.progress-bar .fill');
+      var statusEl = item.querySelector('.status');
+      var iconEl = item.querySelector('.icon');
+
+      var formData = new FormData();
+      formData.append('file', file);
+      formData.append('token', token);
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/upload', true);
+
+      xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+          var pct = Math.round((e.loaded / e.total) * 100);
+          progressFill.style.width = pct + '%';
+          statusEl.textContent = '上传中 ' + pct + '%';
+        }
+      });
+
+      xhr.addEventListener('load', function() {
+        var progressBar = item.querySelector('.progress-bar');
+        if (progressBar) progressBar.remove();
+
+        if (xhr.status === 200) {
+          try {
+            var result = JSON.parse(xhr.responseText);
+            if (result.code === 0) {
+              item.className = 'file-item success';
+              iconEl.innerHTML = '&#10003;';
+              statusEl.textContent = '上传成功';
+            } else {
+              item.className = 'file-item error';
+              iconEl.innerHTML = '&#10007;';
+              statusEl.textContent = result.msg || '上传失败';
+            }
+          } catch (e) {
+            item.className = 'file-item error';
+            iconEl.innerHTML = '&#10007;';
+            statusEl.textContent = '服务器响应异常';
+          }
+        } else {
+          item.className = 'file-item error';
+          iconEl.innerHTML = '&#10007;';
+          statusEl.textContent = '上传失败 (HTTP ' + xhr.status + ')';
+        }
+      });
+
+      xhr.addEventListener('error', function() {
+        var progressBar = item.querySelector('.progress-bar');
+        if (progressBar) progressBar.remove();
+        item.className = 'file-item error';
+        iconEl.innerHTML = '&#10007;';
+        statusEl.textContent = '网络错误，请检查连接';
+      });
+
+      xhr.send(formData);
+    }
+
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(text));
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
