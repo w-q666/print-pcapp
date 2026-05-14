@@ -190,3 +190,9 @@
   opacity: 0;
   width: 0;
 }
+
+/* Offline alert — centered between nav-menu and nav-bottom */
+.nav-offline-alert {
+  margin-top: auto;
+  margin-bottom: auto;
+}
