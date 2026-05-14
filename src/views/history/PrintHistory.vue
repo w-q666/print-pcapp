@@ -4,7 +4,7 @@ import { Table, Tag, Select, SelectOption, Button, Space } from 'ant-design-vue'
 import { ReloadOutlined, DownloadOutlined } from '@ant-design/icons-vue'
 import { usePrintHistory } from '../../stores/print-history'
 import { exportCSV } from '../../utils/export-csv'
-import type { ColumnType } from 'ant-design-vue/es/table'
+import type { TableColumnType as ColumnType } from 'ant-design-vue'
 
 const store = usePrintHistory()
 

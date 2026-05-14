@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { message } from 'ant-design-vue'
+import { message, RadioGroup, RadioButton, Spin, Empty, Modal } from 'ant-design-vue'
 import FileUploadZone from '../../components/FileUploadZone.vue'
 import FileListItem from '../../components/FileListItem.vue'
 import PdfPreview from '../file-preview/PdfPreview.vue'
@@ -55,15 +55,15 @@ onMounted(() => {
     <div class="file-list-section">
       <div class="file-list-header">
         <span class="file-count">共 {{ fileBrowser.sortedFiles.length }} 个文件</span>
-        <a-radio-group v-model:value="fileBrowser.sortBy" size="small">
-          <a-radio-button value="name">按名称</a-radio-button>
-          <a-radio-button value="extension">按类型</a-radio-button>
-        </a-radio-group>
+        <RadioGroup v-model:value="fileBrowser.sortBy" size="small">
+          <RadioButton value="name">按名称</RadioButton>
+          <RadioButton value="extension">按类型</RadioButton>
+        </RadioGroup>
       </div>
 
-      <a-spin :spinning="fileBrowser.loading">
+      <Spin :spinning="fileBrowser.loading">
         <div v-if="fileBrowser.sortedFiles.length === 0 && !fileBrowser.loading" class="empty-state">
-          <a-empty description="暂无文件，请上传" />
+          <Empty description="暂无文件，请上传" />
         </div>
         <div v-else class="file-list">
           <FileListItem
@@ -74,22 +74,22 @@ onMounted(() => {
             @delete="handleDelete"
           />
         </div>
-      </a-spin>
+      </Spin>
     </div>
 
-    <a-modal
+    <Modal
       v-model:open="previewVisible"
       :title="previewFileName"
       :footer="null"
       width="80%"
-      :body-style="{ height: '70vh', overflow: 'auto', padding: '16px' }"
+      :styles="{ body: { height: '70vh', overflow: 'auto', padding: '16px' } }"
       destroy-on-close
     >
       <PdfPreview v-if="previewType === 'PDF'" :file-name="previewFileName" />
       <ImagePreview v-else-if="previewType === 'IMG'" :file-name="previewFileName" />
       <TextPreview v-else-if="previewType === 'TEXT'" :file-name="previewFileName" />
       <HtmlPreview v-else-if="previewType === 'HTML'" :file-name="previewFileName" />
-    </a-modal>
+    </Modal>
   </div>
 </template>
 
@@ -127,7 +127,7 @@ onMounted(() => {
 }
 
 .file-list {
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--ant-color-border-secondary, #f0f0f0);
   border-radius: 8px;
   overflow: hidden;
 }

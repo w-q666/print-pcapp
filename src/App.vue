@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { notification } from 'ant-design-vue'
+import { notification, ConfigProvider } from 'ant-design-vue'
 import { usePlatform } from './composables/usePlatform'
 import { useAppConfig } from './stores/app-config'
 import { useSettings } from './stores/settings'
@@ -33,8 +33,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <DesktopLayout v-if="platform === 'desktop'" />
-  <MobileLayout v-else />
+  <ConfigProvider>
+    <DesktopLayout v-if="platform === 'desktop'" />
+    <MobileLayout v-else />
+  </ConfigProvider>
 </template>
 
 <style>

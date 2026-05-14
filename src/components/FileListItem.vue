@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button, Popconfirm } from 'ant-design-vue'
 import { EyeOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import FileIcon from './FileIcon.vue'
 
@@ -17,19 +18,19 @@ const emit = defineEmits<{
       <span class="file-name">{{ fileName }}</span>
     </div>
     <div class="file-actions">
-      <a-button type="text" size="small" @click="emit('preview', fileName)">
+      <Button type="text" size="small" aria-label="预览" @click="emit('preview', fileName)">
         <template #icon><EyeOutlined /></template>
-      </a-button>
-      <a-popconfirm
+      </Button>
+      <Popconfirm
         title="确定删除此文件？"
         ok-text="删除"
         cancel-text="取消"
         @confirm="emit('delete', fileName)"
       >
-        <a-button type="text" size="small" danger>
+        <Button type="text" size="small" danger aria-label="删除">
           <template #icon><DeleteOutlined /></template>
-        </a-button>
-      </a-popconfirm>
+        </Button>
+      </Popconfirm>
     </div>
   </div>
 </template>
@@ -45,7 +46,7 @@ const emit = defineEmits<{
 }
 
 .file-list-item:hover {
-  background-color: #f5f5f5;
+  background-color: var(--ant-control-item-bg-hover, #f5f5f5);
 }
 
 .file-info {

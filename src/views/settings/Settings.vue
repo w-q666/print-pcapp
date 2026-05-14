@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Tabs, TabPane, Button, message } from 'ant-design-vue'
+import { ref, markRaw } from 'vue'
+import { Tabs, Button, message } from 'ant-design-vue'
 import { SaveOutlined } from '@ant-design/icons-vue'
 import { useSettings } from '../../stores/settings'
 import FileFormatTab from './FileFormatTab.vue'
@@ -10,6 +10,12 @@ import SystemSettingsTab from './SystemSettingsTab.vue'
 const settings = useSettings()
 const activeTab = ref('fileFormat')
 const saving = ref(false)
+
+const tabItems = [
+  { key: 'fileFormat', label: '文件格式', component: markRaw(FileFormatTab) },
+  { key: 'printSettings', label: '打印设置', component: markRaw(PrintSettingsTab) },
+  { key: 'systemSettings', label: '系统设置', component: markRaw(SystemSettingsTab) },
+]
 
 async function handleSave() {
   saving.value = true
@@ -33,17 +39,12 @@ async function handleSave() {
         保存配置
       </Button>
     </div>
-    <Tabs v-model:activeKey="activeTab" style="margin-top: 8px">
-      <TabPane key="fileFormat" tab="文件格式">
-        <FileFormatTab />
-      </TabPane>
-      <TabPane key="printSettings" tab="打印设置">
-        <PrintSettingsTab />
-      </TabPane>
-      <TabPane key="systemSettings" tab="系统设置">
-        <SystemSettingsTab />
-      </TabPane>
-    </Tabs>
+    <Tabs
+      v-model:activeKey="activeTab"
+      :items="tabItems.map(t => ({ key: t.key, label: t.label }))"
+      style="margin-top: 8px"
+    />
+    <component :is="tabItems.find(t => t.key === activeTab)?.component" />
   </div>
 </template>
 

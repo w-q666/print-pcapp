@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { message } from 'ant-design-vue'
+import { message, UploadDragger } from 'ant-design-vue'
 import { CloudUploadOutlined } from '@ant-design/icons-vue'
 import { isSupported, fileCategories } from '../utils/file-types'
 import { useFileSystem } from '../composables/useFileSystem'
@@ -43,7 +43,7 @@ async function handleUpload(file: File) {
 </script>
 
 <template>
-  <a-upload-dragger
+  <UploadDragger
     :accept="acceptExtensions"
     :multiple="true"
     :show-upload-list="false"
@@ -56,7 +56,7 @@ async function handleUpload(file: File) {
       <p class="upload-title">拖拽文件到此处或点击选择文件</p>
       <p class="upload-hint">支持 PDF, Word, Excel, 图片, 文本, HTML 等多种格式</p>
     </div>
-  </a-upload-dragger>
+  </UploadDragger>
 </template>
 
 <style scoped>
@@ -70,7 +70,7 @@ async function handleUpload(file: File) {
 
 .upload-icon {
   font-size: 48px;
-  color: #1890ff;
+  color: var(--ant-color-primary, #1677ff);
   margin-bottom: 16px;
 }
 

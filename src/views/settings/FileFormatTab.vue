@@ -92,12 +92,12 @@ function toggle(groupKey: keyof AllowedExtensions, ext: string) {
   margin-bottom: 24px;
 }
 .ext-name {
-  color: #eb2f96;
+  color: var(--ant-color-pink, #eb2f96);
   font-weight: 600;
   margin-right: 6px;
 }
 .ext-desc {
-  color: #666;
+  color: var(--ant-color-text-secondary, #666);
   font-size: 13px;
 }
 </style>
