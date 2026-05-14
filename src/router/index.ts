@@ -20,6 +20,12 @@ const router = createRouter({
       meta: { title: '打印历史', icon: 'HistoryOutlined' },
     },
     {
+      path: '/log',
+      name: 'log',
+      component: () => import('../views/log/SystemLog.vue'),
+      meta: { title: '系统日志', icon: 'FileTextOutlined' },
+    },
+    {
       path: '/settings',
       name: 'settings',
       component: () => import('../views/settings/Settings.vue'),

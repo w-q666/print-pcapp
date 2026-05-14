@@ -5,7 +5,7 @@ import {
   Layout, LayoutSider, LayoutHeader, LayoutContent,
   Menu, MenuItem,
 } from 'ant-design-vue'
-import { FolderOutlined, HistoryOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import { FolderOutlined, HistoryOutlined, SettingOutlined, FileTextOutlined } from '@ant-design/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -15,6 +15,7 @@ const selectedKeys = computed(() => [route.name as string])
 const menuItems = [
   { key: 'files', icon: FolderOutlined, label: '文件管理' },
   { key: 'history', icon: HistoryOutlined, label: '打印历史' },
+  { key: 'log', icon: FileTextOutlined, label: '系统日志' },
   { key: 'settings', icon: SettingOutlined, label: '系统配置' },
 ]
 

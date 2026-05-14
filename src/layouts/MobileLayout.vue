@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Tabs, TabPane } from 'ant-design-vue'
-import { FolderOutlined, HistoryOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import { FolderOutlined, HistoryOutlined, SettingOutlined, FileTextOutlined } from '@ant-design/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -12,6 +12,7 @@ const activeKey = computed(() => route.name as string)
 const tabItems = [
   { key: 'files', label: '文件', icon: FolderOutlined },
   { key: 'history', label: '历史', icon: HistoryOutlined },
+  { key: 'log', label: '日志', icon: FileTextOutlined },
   { key: 'settings', label: '设置', icon: SettingOutlined },
 ]
 
