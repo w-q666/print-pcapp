@@ -6,6 +6,7 @@ import {
   Menu, MenuItem,
 } from 'ant-design-vue'
 import { FolderOutlined, HistoryOutlined, SettingOutlined, FileTextOutlined } from '@ant-design/icons-vue'
+import PrintStatusOverlay from '../views/print/PrintStatusOverlay.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -26,6 +27,7 @@ function onMenuClick({ key }: { key: string | number }) {
 
 <template>
   <Layout style="min-height: 100vh">
+    <PrintStatusOverlay />
     <LayoutSider breakpoint="lg" collapsible>
       <div style="height: 64px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 600;">
         网络打印服务

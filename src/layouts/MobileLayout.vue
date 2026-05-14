@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Tabs, TabPane } from 'ant-design-vue'
 import { FolderOutlined, HistoryOutlined, SettingOutlined, FileTextOutlined } from '@ant-design/icons-vue'
+import PrintStatusOverlay from '../views/print/PrintStatusOverlay.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -23,6 +24,7 @@ function onTabChange(key: string | number) {
 
 <template>
   <div style="display: flex; flex-direction: column; height: 100vh;">
+    <PrintStatusOverlay />
     <div style="padding: 12px 16px; background: #fff; border-bottom: 1px solid #f0f0f0;">
       <h3 style="margin: 0;">{{ route.meta.title }}</h3>
     </div>
