@@ -6,6 +6,7 @@ import {
 } from '@ant-design/icons-vue'
 import NavItem from './NavItem.vue'
 import ServiceStatus from './ServiceStatus.vue'
+import OfflineAlert from './OfflineAlert.vue'
 
 defineProps<{
   collapsed: boolean
@@ -45,6 +46,8 @@ const bottomItems = [
         :collapsed="collapsed"
       />
     </div>
+
+    <OfflineAlert class="nav-offline-alert" />
 
     <div class="nav-bottom">
       <NavItem

@@ -250,11 +250,6 @@ impl SystemLogRepo {
         Ok(())
     }
 
-    pub fn count(db: &Mutex<Connection>) -> Result<i64, String> {
-        let conn = db.lock().map_err(|e| e.to_string())?;
-        conn.query_row("SELECT COUNT(*) FROM system_logs", [], |row| row.get(0))
-            .map_err(|e| e.to_string())
-    }
 }
 
 #[cfg(test)]

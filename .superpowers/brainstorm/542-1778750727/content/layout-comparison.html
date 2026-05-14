@@ -1,0 +1,132 @@
+<h2>文件管理布局优化 — 方案 B</h2>
+<p class="subtitle">对比当前布局和优化后的布局（右侧卡片保持不变）</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">当前 HomePage 布局</div>
+    <div class="mockup-body" style="display:flex; flex-direction:column; gap:10px; padding:12px 10px;">
+      <!-- Upload zone - large -->
+      <div style="border:2px dashed #d9d9d9; border-radius:8px; padding:28px 16px; text-align:center; background:#fafafa;">
+        <div style="font-size:28px; color:#1677ff; margin-bottom:4px;">☁</div>
+        <div style="font-size:14px; font-weight:500;">拖拽文件到此处或点击选择</div>
+        <div style="font-size:12px; color:#999; margin-top:2px;">支持 PDF、图片、纯文本、HTML</div>
+      </div>
+      <!-- File list card -->
+      <div style="border:1px solid #f0f0f0; border-radius:8px; overflow:hidden;">
+        <div style="padding:10px 14px; font-weight:600; font-size:14px; border-bottom:1px solid #f0f0f0; background:#fafafa;">文件列表</div>
+        <div style="padding:6px 0;">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:7px 12px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="color:#1677ff;">📄</span><span style="font-size:13px;">report.pdf</span>
+            </div>
+            <div style="display:flex; gap:4px;">
+              <span style="font-size:11px; color:#999; padding:2px 8px;">预览</span>
+              <span style="font-size:11px; color:#ff4d4f; padding:2px 8px;">删除</span>
+              <span style="font-size:11px; color:#1677ff; border:1px solid #1677ff; border-radius:4px; padding:2px 8px;">🖨 打印</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:7px 12px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="color:#52c41a;">🖼</span><span style="font-size:13px;">photo.jpg</span>
+            </div>
+            <div style="display:flex; gap:4px;">
+              <span style="font-size:11px; color:#999; padding:2px 8px;">预览</span>
+              <span style="font-size:11px; color:#ff4d4f; padding:2px 8px;">删除</span>
+              <span style="font-size:11px; color:#1677ff; border:1px solid #1677ff; border-radius:4px; padding:2px 8px;">🖨 打印</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Problems callouts -->
+      <div style="font-size:11px; color:#fa8c16; padding:4px 8px; border-left:3px solid #fa8c16; background:#fff7e6;">
+        上传区过高，占用大量空间 | 无排序和文件计数 | 打印按钮散落在行外
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">优化后布局（方案 B）</div>
+    <div class="mockup-body" style="display:flex; flex-direction:column; gap:10px; padding:12px 10px;">
+      <!-- Upload zone - compact -->
+      <div style="border:2px dashed #d9d9d9; border-radius:6px; padding:14px 16px; text-align:center; background:#fafafa; display:flex; align-items:center; justify-content:center; gap:10px;">
+        <span style="font-size:22px; color:#1677ff;">☁</span>
+        <span style="font-size:14px; font-weight:500;">拖拽文件或点击上传</span>
+        <span style="font-size:12px; color:#bbb;">|</span>
+        <span style="font-size:12px; color:#999;">PDF / 图片 / 文本 / HTML</span>
+      </div>
+      <!-- Toolbar -->
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:13px; color:#666;">共 <b>2</b> 个文件</span>
+        <div style="display:flex; gap:2px; border:1px solid #d9d9d9; border-radius:4px; overflow:hidden;">
+          <span style="font-size:12px; padding:3px 10px; background:#1677ff; color:#fff;">按名称</span>
+          <span style="font-size:12px; padding:3px 10px; color:#666;">按类型</span>
+        </div>
+      </div>
+      <!-- File list - no card wrapper -->
+      <div style="border:1px solid #f0f0f0; border-radius:8px; overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #f5f5f5;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="color:#1677ff; font-size:18px;">📄</span>
+            <div>
+              <div style="font-size:13px; font-weight:500;">report.pdf</div>
+              <div style="font-size:11px; color:#999;">2.4 MB · 今天 15:30</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:2px; align-items:center;">
+            <span style="font-size:11px; color:#666; padding:4px 8px; border-radius:4px; cursor:pointer;">👁 预览</span>
+            <span style="font-size:11px; color:#ff4d4f; padding:4px 8px; border-radius:4px; cursor:pointer;">🗑 删除</span>
+            <span style="font-size:11px; color:#1677ff; border:1px solid #1677ff; border-radius:4px; padding:4px 10px; cursor:pointer; margin-left:4px;">🖨 打印</span>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="color:#52c41a; font-size:18px;">🖼</span>
+            <div>
+              <div style="font-size:13px; font-weight:500;">photo.jpg</div>
+              <div style="font-size:11px; color:#999;">1.1 MB · 昨天 10:15</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:2px; align-items:center;">
+            <span style="font-size:11px; color:#666; padding:4px 8px; border-radius:4px; cursor:pointer;">👁 预览</span>
+            <span style="font-size:11px; color:#ff4d4f; padding:4px 8px; border-radius:4px; cursor:pointer;">🗑 删除</span>
+            <span style="font-size:11px; color:#1677ff; border:1px solid #1677ff; border-radius:4px; padding:4px 10px; cursor:pointer; margin-left:4px;">🖨 打印</span>
+          </div>
+        </div>
+      </div>
+      <!-- Improvements callouts -->
+      <div style="font-size:11px; color:#52c41a; padding:4px 8px; border-left:3px solid #52c41a; background:#f6ffed;">
+        上传区紧凑（单行）| 有排序 + 文件计数 | 文件行含大小/时间 | 操作内聚
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>具体改动点</h3>
+  <table style="width:100%; font-size:13px; border-collapse:collapse;">
+    <tr style="border-bottom:1px solid #f0f0f0;">
+      <th style="text-align:left; padding:8px 12px; color:#999; font-weight:500;">模块</th>
+      <th style="text-align:left; padding:8px 12px; color:#999; font-weight:500;">改动</th>
+    </tr>
+    <tr style="border-bottom:1px solid #f0f0f0;">
+      <td style="padding:8px 12px; font-weight:500;">FileUploadZone</td>
+      <td style="padding:8px 12px;">从垂直大块改为水平紧凑单行（图标 + 文字 + 格式提示），高度减少 ~60%</td>
+    </tr>
+    <tr style="border-bottom:1px solid #f0f0f0;">
+      <td style="padding:8px 12px; font-weight:500;">FileListItem</td>
+      <td style="padding:8px 12px;">增加文件大小和时间显示（双行布局：名称 + 元信息），打印按钮移入组件内部</td>
+    </tr>
+    <tr style="border-bottom:1px solid #f0f0f0;">
+      <td style="padding:8px 12px; font-weight:500;">文件列表头</td>
+      <td style="padding:8px 12px;">新增工具栏：左侧文件计数，右侧排序切换（按名称/按类型）</td>
+    </tr>
+    <tr style="border-bottom:1px solid #f0f0f0;">
+      <td style="padding:8px 12px; font-weight:500;">预览 Modal</td>
+      <td style="padding:8px 12px;">从 FileManager 迁移到 HomePage：PdfPreview / ImagePreview / TextPreview / HtmlPreview</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px; font-weight:500;">右侧卡片</td>
+      <td style="padding:8px 12px;">保持不变（QrCodeCard / SystemStatusCard / PrinterStatusCard）</td>
+    </tr>
+  </table>
+</div>
