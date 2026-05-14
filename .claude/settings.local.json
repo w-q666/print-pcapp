@@ -1,4 +1,5 @@
 {
+  "enabledMcpjsonServers": ["antd"],
   "permissions": {
     "allow": [
       "Bash(*)",
