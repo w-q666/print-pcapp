@@ -37,14 +37,14 @@ onUnmounted(() => {
 <template>
   <Card :loading="loading" size="small" class="status-card">
     <template #title>
-      <DashboardOutlined style="margin-right: 8px" />뿯粽뿯纽뿯犽态
+      <DashboardOutlined style="margin-right: 8px" />系统状态
     </template>
     <div class="status-grid">
       <div class="status-item">
-        <Statistic title="뿯掽붿뿯亽뿯劽" :value="queueCount" :value-style="{ color: '#fff', fontSize: '28px' }" />
+        <Statistic title="排队任务" :value="queueCount" :value-style="{ color: '#fff', fontSize: '28px' }" />
       </div>
       <div class="status-item">
-        <Statistic title="뿯亽뿯施뿯宽成" :value="todayCount" :value-style="{ color: '#fff', fontSize: '28px' }" />
+        <Statistic title="今日完成" :value="todayCount" :value-style="{ color: '#fff', fontSize: '28px' }" />
       </div>
     </div>
   </Card>

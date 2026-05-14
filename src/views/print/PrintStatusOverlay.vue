@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
+import { Spin } from 'ant-design-vue'
 import {
   CheckCircleOutlined, CloseCircleOutlined, PrinterOutlined,
   LoadingOutlined, WarningOutlined,
@@ -11,22 +12,17 @@ const visible = ref(false)
 let hideTimer: ReturnType<typeof setTimeout> | null = null
 
 const statusConfig = computed(() => {
-  const primary = 'var(--ant-color-primary, #1677ff)'
-  const success = 'var(--ant-color-success, #52c41a)'
-  const error = 'var(--ant-color-error, #ff4d4f)'
-  const warning = 'var(--ant-color-warning, #faad14)'
-
   switch (printTask.currentStatus) {
-    case 'connecting': return { icon: LoadingOutlined, color: primary, text: '正在连接…' }
-    case 'preparing': return { icon: LoadingOutlined, color: primary, text: '准备打印…' }
-    case 'printing': return { icon: PrinterOutlined, color: primary, text: '正在打印…' }
-    case 'data_sent': return { icon: LoadingOutlined, color: primary, text: '数据已发送…' }
-    case 'done': return { icon: CheckCircleOutlined, color: success, text: '打印完成' }
-    case 'error': return { icon: CloseCircleOutlined, color: error, text: '打印错误' }
-    case 'failed': return { icon: CloseCircleOutlined, color: error, text: '打印失败' }
-    case 'cancelled': return { icon: WarningOutlined, color: warning, text: '已取消' }
-    case 'needs_attention': return { icon: WarningOutlined, color: warning, text: '需要处理' }
-    default: return { icon: PrinterOutlined, color: primary, text: '' }
+    case 'connecting': return { icon: LoadingOutlined, color: '#1890ff', text: '正在连接...' }
+    case 'preparing': return { icon: LoadingOutlined, color: '#1890ff', text: '准备打印...' }
+    case 'printing': return { icon: PrinterOutlined, color: '#1890ff', text: '正在打印...' }
+    case 'data_sent': return { icon: LoadingOutlined, color: '#1890ff', text: '数据已发送...' }
+    case 'done': return { icon: CheckCircleOutlined, color: '#52c41a', text: '打印完成' }
+    case 'error': return { icon: CloseCircleOutlined, color: '#ff4d4f', text: '打印错误' }
+    case 'failed': return { icon: CloseCircleOutlined, color: '#ff4d4f', text: '打印失败' }
+    case 'cancelled': return { icon: WarningOutlined, color: '#faad14', text: '已取消' }
+    case 'needs_attention': return { icon: WarningOutlined, color: '#faad14', text: '需要处理' }
+    default: return { icon: PrinterOutlined, color: '#1890ff', text: '' }
   }
 })
 
@@ -57,7 +53,7 @@ watch(() => printTask.currentStatus, (status) => {
   <Transition name="overlay-fade">
     <div v-if="visible" class="print-status-overlay" :style="{ borderLeftColor: statusConfig.color }">
       <div class="overlay-icon">
-        <component v-if="isSpinning" :is="statusConfig.icon" spin :style="{ color: statusConfig.color, fontSize: '24px' }" />
+        <Spin v-if="isSpinning" :indicator="statusConfig.icon" />
         <component v-else :is="statusConfig.icon" :style="{ color: statusConfig.color, fontSize: '24px' }" />
       </div>
       <div class="overlay-content">
@@ -83,10 +79,10 @@ watch(() => printTask.currentStatus, (status) => {
   padding: 16px 20px;
   min-width: 280px;
   max-width: 380px;
-  background: var(--ant-color-bg-container, #fff);
+  background: #fff;
   border-radius: 8px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  border-left: 4px solid var(--ant-color-primary, #1677ff);
+  border-left: 4px solid #1890ff;
 }
 
 .overlay-icon {
@@ -107,7 +103,7 @@ watch(() => printTask.currentStatus, (status) => {
 .overlay-job {
   font-size: 14px;
   font-weight: 500;
-  color: var(--ant-color-text, rgba(0, 0, 0, 0.85));
+  color: rgba(0, 0, 0, 0.85);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -120,7 +116,7 @@ watch(() => printTask.currentStatus, (status) => {
 
 .overlay-msg {
   font-size: 12px;
-  color: var(--ant-color-text-tertiary, rgba(0, 0, 0, 0.45));
+  color: rgba(0, 0, 0, 0.45);
   margin-top: 4px;
   word-break: break-all;
 }

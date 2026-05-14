@@ -24,13 +24,13 @@ onMounted(() => {
       </Button>
     </template>
 
-    <Empty v-if="printerList.printers.length === 0 && !printerList.loading" description="未뿯厽뿯玽打印机" />
+    <Empty v-if="printerList.printers.length === 0 && !printerList.loading" description="未发现打印机" />
 
     <div v-else class="printer-list">
       <div v-for="name in printerList.printers" :key="name" class="printer-item">
         <span class="printer-name">{{ name }}</span>
         <Tag :color="name === printerList.defaultPrinter ? 'blue' : 'default'">
-          {{ name === printerList.defaultPrinter ? '默뿯붿' : '就뿯纽' }}
+          {{ name === printerList.defaultPrinter ? '默认' : '就绪' }}
         </Tag>
       </div>
     </div>

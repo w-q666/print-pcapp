@@ -9,13 +9,9 @@ import SystemStatusCard from '../../components/SystemStatusCard.vue'
 import PrinterStatusCard from '../../components/PrinterStatusCard.vue'
 import PrintDialog from '../print/PrintDialog.vue'
 import { useFileBrowser } from '../../stores/file-browser'
-import { useFileSystem } from '../../composables/useFileSystem'
 import { getFileType } from '../../utils/file-types'
 
 const fileBrowser = useFileBrowser()
-const { base64ToBlobUrl } = useFileSystem()
-
-void base64ToBlobUrl
 
 const printDialogOpen = ref(false)
 const printFileName = ref('')
@@ -48,9 +44,9 @@ onMounted(() => {
       <Col :xs="24" :lg="16">
         <FileUploadZone />
 
-        <Card title="뿯施뿯亽列붿" size="small">
+        <Card title="文件列表" size="small">
           <Spin v-if="fileBrowser.loading" />
-          <Empty v-else-if="fileBrowser.sortedFiles.length === 0" description="뿯暽뿯施뿯施뿯亽붿뿯붿上传" />
+          <Empty v-else-if="fileBrowser.sortedFiles.length === 0" description="暂无文件，请上传" />
           <div v-else class="file-list">
             <div v-for="file in fileBrowser.sortedFiles" :key="file.name" class="file-row">
               <FileListItem

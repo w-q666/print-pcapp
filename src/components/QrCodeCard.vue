@@ -27,9 +27,9 @@ async function loadData() {
 async function copyUrl() {
   try {
     await navigator.clipboard.writeText(lanUrl.value)
-    message.success('뿯붿뿯掽뿯嶽复制')
+    message.success('链接已复制')
   } catch {
-    message.error('复制失붿')
+    message.error('复制失败')
   }
 }
 
@@ -39,7 +39,7 @@ onMounted(loadData)
 <template>
   <Card :loading="loading" size="small">
     <template #title>
-      <QrcodeOutlined style="margin-right: 8px" />手机뿯抽印
+      <QrcodeOutlined style="margin-right: 8px" />手机投印
     </template>
     <div v-if="!loading" class="qr-card-body">
       <img

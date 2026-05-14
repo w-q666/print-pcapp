@@ -48,7 +48,7 @@ const submitting = reactive({ value: false })
 async function handleSubmit() {
   const fileType = getFileType(props.fileName)
   if (!fileType) {
-    message.error('不支持뿯皽뿯施뿯亽格式')
+    message.error('不支持的文件格式')
     return
   }
 
@@ -65,11 +65,11 @@ async function handleSubmit() {
       paperSize: form.paperSize,
       direction: form.direction,
     })
-    message.success('打印뿯亽뿯劽뿯嶽뿯掽뿯亽')
+    message.success('打印任务已提交')
     emit('update:open', false)
     emit('submitted')
   } catch (e: unknown) {
-    message.error(e instanceof Error ? e.message : '打印失붿')
+    message.error(e instanceof Error ? e.message : '打印失败')
   } finally {
     submitting.value = false
   }
@@ -83,37 +83,37 @@ function handleCancel() {
 <template>
   <Modal
     :open="open"
-    title="打印뿯붿置"
-    ok-text="开뿯妽打印"
-    cancel-text="뿯厽뿯涽"
+    title="打印设置"
+    ok-text="开始打印"
+    cancel-text="取消"
     :confirm-loading="submitting.value"
     @ok="handleSubmit"
     @cancel="handleCancel"
     :width="520"
   >
     <Form layout="vertical" style="margin-top: 16px">
-      <FormItem label="뿯施뿯亽名뿯禽">
+      <FormItem label="文件名称">
         <Input :value="fileName" disabled />
       </FormItem>
       <FormItem label="打印机">
         <PrinterSelector v-model="form.printer" />
       </FormItem>
-      <FormItem label="뿯纽张大小">
+      <FormItem label="纸张大小">
         <Select
           v-model:value="form.paperSize"
           :options="paperOptions"
-          placeholder="뿯붿붿뿯抽뿯纽张大小"
+          placeholder="请选择纸张大小"
         />
       </FormItem>
-      <FormItem label="打印뿯亽数">
+      <FormItem label="打印份数">
         <InputNumber v-model:value="form.copies" :min="1" :max="99" style="width: 120px" />
       </FormItem>
-      <FormItem label="彩붿打印">
+      <FormItem label="彩色打印">
         <Switch v-model:checked="form.color" />
       </FormItem>
-      <FormItem label="打印뿯施向">
+      <FormItem label="打印方向">
         <RadioGroup v-model:value="form.direction">
-          <RadioButton value="PORTRAIT">뿯纽向</RadioButton>
+          <RadioButton value="PORTRAIT">纵向</RadioButton>
           <RadioButton value="LANDSCAPE">横向</RadioButton>
         </RadioGroup>
       </FormItem>

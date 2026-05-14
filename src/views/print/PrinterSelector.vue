@@ -27,7 +27,7 @@ onMounted(async () => {
   <div class="printer-selector">
     <Select
       :value="modelValue || undefined"
-      placeholder="`u{8BF7}`u{9009}`u{62E9}`u{6253}`u{5370}`u{673A}"
+      placeholder="请选择打印机"
       style="flex: 1"
       :loading="printerList.loading"
       :options="printerList.printers.map(p => ({ label: p, value: p }))"
@@ -36,7 +36,7 @@ onMounted(async () => {
     <Button
       :loading="printerList.loading"
       @click="printerList.refresh()"
-      title="`u{5237}`u{65B0}`u{6253}`u{5370}`u{673A}`u{5217}`u{8868}"
+      title="刷新打印机列表"
     >
       <template #icon><ReloadOutlined /></template>
     </Button>
