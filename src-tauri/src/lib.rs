@@ -1,6 +1,7 @@
 mod commands;
 mod db;
 mod entities;
+pub mod logger;
 mod repos;
 
 use db::{init_db, AppState};
