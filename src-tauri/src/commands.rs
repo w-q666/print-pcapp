@@ -1,5 +1,6 @@
 use std::fs;
 use tauri::AppHandle;
+use tauri::Manager;
 use crate::db::AppState;
 use crate::entities::PrintJob;
 use crate::repos::PrintJobRepo;
