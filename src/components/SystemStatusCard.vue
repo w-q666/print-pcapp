@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Card, Statistic } from 'ant-design-vue'
-import { DashboardOutlined } from '@ant-design/icons-vue'
 import { invoke } from '@tauri-apps/api/core'
 
 const queueCount = ref(0)
@@ -35,38 +33,59 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Card :loading="loading" size="small" class="status-card">
-    <template #title>
-      <DashboardOutlined style="margin-right: 8px" />系统状态
-    </template>
-    <div class="status-grid">
+  <div class="status-card">
+    <div class="status-row">
       <div class="status-item">
-        <Statistic title="排队任务" :value="queueCount" :value-style="{ color: '#fff', fontSize: '28px' }" />
+        <span class="status-value">{{ loading ? '-' : queueCount }}</span>
+        <span class="status-label">排队</span>
       </div>
+      <div class="status-divider" />
       <div class="status-item">
-        <Statistic title="今日完成" :value="todayCount" :value-style="{ color: '#fff', fontSize: '28px' }" />
+        <span class="status-value">{{ loading ? '-' : todayCount }}</span>
+        <span class="status-label">今日完成</span>
       </div>
     </div>
-  </Card>
+  </div>
 </template>
 
 <style scoped>
-.status-card :deep(.ant-card-body) {
+.status-card {
   background: linear-gradient(135deg, #722ed1, #b37feb);
-  border-radius: 0 0 8px 8px;
+  border-radius: 8px;
+  padding: 14px 10px;
+  text-align: center;
 }
 
-.status-grid {
+.status-row {
   display: flex;
-  gap: 24px;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
 }
 
 .status-item {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.status-item :deep(.ant-statistic-title) {
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 13px;
+.status-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.status-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 2px;
+}
+
+.status-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.25);
 }
 </style>
