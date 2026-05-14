@@ -1,9 +1,18 @@
 use std::fs;
+use std::path::Path;
 use tauri::AppHandle;
 use tauri::Manager;
 use crate::db::AppState;
 use crate::entities::PrintJob;
 use crate::repos::PrintJobRepo;
+
+fn safe_filename(name: &str) -> Result<String, String> {
+    Path::new(name)
+        .file_name()
+        .and_then(|f| f.to_str())
+        .map(|f| f.to_string())
+        .ok_or_else(|| format!("Invalid file name: {}", name))
+}
 
 // ── PrintJob commands ──
 
@@ -50,9 +59,10 @@ pub fn file_save(
         .map_err(|e| e.to_string())?;
     let files_dir = data_dir.join("files");
     fs::create_dir_all(&files_dir).map_err(|e| e.to_string())?;
-    let path = files_dir.join(&name);
+    let safe_name = safe_filename(&name)?;
+    let path = files_dir.join(&safe_name);
     fs::write(&path, &bytes).map_err(|e| e.to_string())?;
-    Ok(path.to_string_lossy().to_string())
+    Ok(safe_name)
 }
 
 #[tauri::command]
@@ -61,7 +71,8 @@ pub fn file_read(app_handle: AppHandle, name: String) -> Result<String, String> 
         .path()
         .app_data_dir()
         .map_err(|e| e.to_string())?;
-    let path = data_dir.join("files").join(&name);
+    let safe_name = safe_filename(&name)?;
+    let path = data_dir.join("files").join(&safe_name);
     let bytes = fs::read(&path).map_err(|e| e.to_string())?;
     use base64::Engine;
     Ok(base64::engine::general_purpose::STANDARD.encode(&bytes))
@@ -73,7 +84,8 @@ pub fn file_delete(app_handle: AppHandle, name: String) -> Result<(), String> {
         .path()
         .app_data_dir()
         .map_err(|e| e.to_string())?;
-    let path = data_dir.join("files").join(&name);
+    let safe_name = safe_filename(&name)?;
+    let path = data_dir.join("files").join(&safe_name);
     fs::remove_file(&path).map_err(|e| e.to_string())?;
     Ok(())
 }
