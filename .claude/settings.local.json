@@ -1,5 +1,4 @@
 {
-  "enabledMcpjsonServers": ["antd","antd-components"],
   "permissions": {
     "allow": [
       "Bash(*)",
@@ -16,7 +15,12 @@
       "TaskCreate(*)",
       "TaskUpdate(*)",
       "Monitor(*)",
-      "NotebookEdit(*)"
+      "NotebookEdit(*)",
+      "mcp__MiniMax__understand_image"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "antd",
+    "antd-components"
+  ]
 }
