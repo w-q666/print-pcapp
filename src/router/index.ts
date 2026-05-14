@@ -10,7 +10,7 @@ const router = createRouter({
     {
       path: '/files',
       name: 'files',
-      component: () => import('../views/file-manager/FileManager.vue'),
+      component: () => import('../views/home/HomePage.vue'),
       meta: { title: '文件管理', icon: 'FolderOutlined' },
     },
     {
