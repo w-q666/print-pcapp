@@ -4,6 +4,8 @@ import { Tabs, TabPane, Button, message } from 'ant-design-vue'
 import { SaveOutlined } from '@ant-design/icons-vue'
 import { useSettings } from '../../stores/settings'
 import FileFormatTab from './FileFormatTab.vue'
+import PrintSettingsTab from './PrintSettingsTab.vue'
+import SystemSettingsTab from './SystemSettingsTab.vue'
 
 const settings = useSettings()
 const activeTab = ref('fileFormat')
@@ -36,10 +38,10 @@ async function handleSave() {
         <FileFormatTab />
       </TabPane>
       <TabPane key="printSettings" tab="打印设置">
-        <div style="padding: 24px; color: #999">打印设置（待实现）</div>
+        <PrintSettingsTab />
       </TabPane>
       <TabPane key="systemSettings" tab="系统设置">
-        <div style="padding: 24px; color: #999">系统设置（待实现）</div>
+        <SystemSettingsTab />
       </TabPane>
     </Tabs>
   </div>
