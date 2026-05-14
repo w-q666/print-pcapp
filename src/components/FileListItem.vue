@@ -55,6 +55,7 @@ function formatSize(bytes: number): string {
         </Button>
       </Popconfirm>
       <Button
+        v-if="canPreview"
         type="primary"
         size="small"
         ghost

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { Button, Empty, Spin, Modal, RadioGroup, RadioButton } from 'ant-design-vue'
+import { Button, Empty, Spin, Modal, RadioGroup, RadioButton, message } from 'ant-design-vue'
 import { ReloadOutlined } from '@ant-design/icons-vue'
 import BasePage from '../../components/layout/BasePage.vue'
 import FileUploadZone from '../../components/FileUploadZone.vue'
@@ -42,7 +42,12 @@ function openPrint(name: string) {
 }
 
 async function handleDelete(name: string) {
-  await fileBrowser.remove(name)
+  try {
+    await fileBrowser.remove(name)
+    message.success(`${name} 已删除`)
+  } catch (e) {
+    message.error(`删除失败: ${e}`)
+  }
 }
 
 onMounted(() => {
