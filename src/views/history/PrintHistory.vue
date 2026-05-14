@@ -51,11 +51,13 @@ const columns = computed<ColumnType[]>(() => [
   },
 ])
 
-function handleStatusChange(val: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handleStatusChange(val: any) {
   store.filterStatus = val || null
 }
 
-function handlePrinterChange(val: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handlePrinterChange(val: any) {
   store.filterPrinter = val || null
 }
 

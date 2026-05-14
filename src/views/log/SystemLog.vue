@@ -46,12 +46,14 @@ function handleSearch() {
   store.fetchLogs()
 }
 
-function handleLevelChange(val: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handleLevelChange(val: any) {
   store.filterLevel = val || null
   store.fetchLogs()
 }
 
-function handleLimitChange(val: number) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handleLimitChange(val: any) {
   store.displayLimit = val
   store.fetchLogs()
 }
