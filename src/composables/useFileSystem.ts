@@ -1,5 +1,11 @@
 import { invoke } from '@tauri-apps/api/core'
 
+export interface FileInfo {
+  name: string
+  size: number
+  modified_at: number  // Unix timestamp in seconds
+}
+
 export function useFileSystem() {
   async function saveFile(name: string, bytes: Uint8Array): Promise<string> {
     return invoke<string>('file_save', { name, bytes: Array.from(bytes) })
@@ -13,8 +19,8 @@ export function useFileSystem() {
     return invoke<void>('file_delete', { name })
   }
 
-  async function listFiles(): Promise<string[]> {
-    return invoke<string[]>('file_list')
+  async function listFiles(): Promise<FileInfo[]> {
+    return invoke<FileInfo[]>('file_list')
   }
 
   function base64ToBlobUrl(base64: string, mimeType: string): string {
