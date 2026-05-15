@@ -31,7 +31,9 @@ const scanValidate = computed(() => validateScanRange(appConfig.scanStartIp, app
 
 const scanHint = computed(() => {
   if (!scanValidate.value.ok) return scanValidate.value.message ?? ''
-  if ((scanValidate.value.count ?? 0) === 0) return '当前仅探测默认服务 IP（未配置网段）'
+  if ((scanValidate.value.count ?? 0) === 0) {
+    return '留空时：启动时将根据本机所有非回环 IPv4 网卡合并扫描（每网段 1–254，合计最多 300 个地址）。若服务在其它网段，请填写范围或将「默认服务 IP」设为打印主机。'
+  }
   return `共 ${scanValidate.value.count} 个 IP（上限 300），同网段连续`
 })
 </script>

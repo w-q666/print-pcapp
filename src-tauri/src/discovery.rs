@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -81,6 +82,33 @@ fn ipv4_equal_string(a: &str, b: &str) -> bool {
     }
 }
 
+/// 未配置扫描范围时：遍历本机非回环、非链路本地 IPv4 所在 /24，合并去重，最多 300 个地址。
+fn auto_ranges_from_interfaces() -> Result<Vec<String>, String> {
+    let mut seen = HashSet::new();
+    let mut out = Vec::new();
+    let interfaces = if_addrs::get_if_addrs().map_err(|e| format!("枚举网卡失败: {}", e))?;
+    for iface in interfaces {
+        let ip = match iface.addr {
+            if_addrs::IfAddr::V4(v4) => v4.ip,
+            _ => continue,
+        };
+        if ip.is_loopback() || ip.is_link_local() {
+            continue;
+        }
+        let o = ip.octets();
+        for last in 1u8..=254u8 {
+            if out.len() >= 300 {
+                return Ok(out);
+            }
+            let s = format!("{}.{}.{}.{}", o[0], o[1], o[2], last);
+            if seen.insert(s.clone()) {
+                out.push(s);
+            }
+        }
+    }
+    Ok(out)
+}
+
 fn build_targets(config: &ScanConfig) -> Result<Vec<String>, String> {
     let dh = config.default_host.trim();
     if dh.is_empty() {
@@ -88,19 +116,23 @@ fn build_targets(config: &ScanConfig) -> Result<Vec<String>, String> {
     }
     let mut targets = vec![dh.to_string()];
 
-    let range_ips: Vec<String> = match (&config.start_ip, &config.end_ip) {
-        (Some(s), Some(e)) => {
-            let st = s.trim();
-            let en = e.trim();
-            if st.is_empty() && en.is_empty() {
-                Vec::new()
-            } else if st.is_empty() || en.is_empty() {
-                return Err("扫描起始 IP 与结束 IP 须同时填写或同时留空".to_string());
-            } else {
-                expand_scan_range(st, en)?
-            }
+    let st = config
+        .start_ip
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty());
+    let en = config
+        .end_ip
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty());
+
+    let range_ips: Vec<String> = match (st, en) {
+        (None, None) => auto_ranges_from_interfaces()?,
+        (Some(s), Some(e)) => expand_scan_range(s, e)?,
+        _ => {
+            return Err("扫描起始 IP 与结束 IP 须同时填写或同时留空".to_string());
         }
-        _ => Vec::new(),
     };
 
     for ip in range_ips {
