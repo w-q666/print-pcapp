@@ -25,7 +25,8 @@ const scanHint = computed(() => {
       打印服务（Java 局域网发现）
     </Typography.Title>
     <Typography.Paragraph type="secondary" style="margin-bottom: 12px; font-size: 13px">
-      与下方「文件格式」等标签无关；修改后请点击右上角「保存配置」。
+      配置本机如何连接 Java 打印服务；修改后请点击右上角「保存配置」。
+      打印机隐藏名单请在「打印设置」标签中配置。
     </Typography.Paragraph>
 
     <Form layout="vertical" style="max-width: 520px">

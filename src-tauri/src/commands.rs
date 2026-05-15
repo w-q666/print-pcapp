@@ -201,6 +201,7 @@ pub struct QueueSubmitRequest {
     pub paper_size: Option<String>,
     pub direction: Option<String>,
     pub service_url: String,
+    pub printer_blacklist: Option<Vec<String>>,
 }
 
 #[tauri::command]
@@ -238,6 +239,7 @@ pub fn print_queue_submit(
         paper_size: req.paper_size.unwrap_or_else(|| "ISO_A4".to_string()),
         direction: req.direction.unwrap_or_else(|| "PORTRAIT".to_string()),
         service_url: req.service_url,
+        printer_blacklist: req.printer_blacklist.unwrap_or_default(),
     };
 
     crate::print_queue::push_task(&queue.db, &task)?;

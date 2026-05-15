@@ -22,14 +22,14 @@ onMounted(() => {
       </Button>
     </div>
 
-    <Empty v-if="printerList.printers.length === 0 && !printerList.loading" :image="Empty.PRESENTED_IMAGE_SIMPLE" description="未发现打印机" :image-style="{ height: '30px' }" />
+    <Empty v-if="printerList.printers.length === 0 && !printerList.loading" :image="Empty.PRESENTED_IMAGE_SIMPLE" :description="printerList.allPrinters.length > 0 ? '全部打印机已被隐藏，请到系统配置调整' : '未发现打印机'" :image-style="{ height: '30px' }" />
 
     <div v-else class="printer-list">
       <div v-for="name in printerList.printers" :key="name" class="printer-item">
-        <span class="printer-dot" :class="{ active: name === printerList.defaultPrinter }" />
+        <span class="printer-dot" :class="{ active: name === printerList.effectiveDefaultPrinter }" />
         <span class="printer-name">{{ name }}</span>
-        <Tag :color="name === printerList.defaultPrinter ? 'blue' : 'default'" class="printer-tag">
-          {{ name === printerList.defaultPrinter ? '默认' : '就绪' }}
+        <Tag :color="name === printerList.effectiveDefaultPrinter ? 'blue' : 'default'" class="printer-tag">
+          {{ name === printerList.effectiveDefaultPrinter ? '默认' : '就绪' }}
         </Tag>
       </div>
     </div>

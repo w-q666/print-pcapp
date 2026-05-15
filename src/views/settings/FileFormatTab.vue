@@ -51,7 +51,7 @@ function toggle(groupKey: keyof AllowedExtensions, ext: string) {
     <div v-for="group in groups" :key="group.key" class="format-group">
       <Typography.Title :level="5" style="margin-bottom: 12px">{{ group.title }}</Typography.Title>
       <Row :gutter="[16, 8]">
-        <Col v-for="item in group.items" :key="item.ext" :xs="12" :sm="8" :md="6">
+        <Col v-for="item in group.items" :key="item.ext" :xs="12" :sm="8" :md="6" :lg="4">
           <Checkbox
             :checked="settings.allowedExtensions[group.key][item.ext]"
             @change="toggle(group.key, item.ext)"

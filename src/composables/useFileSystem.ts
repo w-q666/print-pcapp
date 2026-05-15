@@ -12,7 +12,7 @@ export interface FileInfo {
 export function useFileSystem() {
   async function saveFile(name: string, bytes: Uint8Array): Promise<string> {
     try {
-      const result = await invoke<string>('file_save', { name, bytes: Array.from(bytes) })
+      const result = await invoke<string>('file_save', { name, bytes })
       logger.info('file', `file saved: ${name} (${(bytes.length / 1024).toFixed(2)} KB)`)
       return result
     } catch (err) {

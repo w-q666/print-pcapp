@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { useLogger } from './useLogger'
 import { usePrintTask } from '../stores/print-task'
 import { usePrinterList } from '../stores/printer-list'
+import { useSettings } from '../stores/settings'
 import { useAppConfig } from '../stores/app-config'
 import type { PrintRequest } from '../api/types'
 
@@ -21,6 +22,7 @@ export interface PrintParams {
 export function usePrintService() {
   const printTask = usePrintTask()
   const printerList = usePrinterList()
+  const settings = useSettings()
   const appConfig = useAppConfig()
   const logger = useLogger('frontend:usePrintService')
 
@@ -29,19 +31,25 @@ export function usePrintService() {
     printTask.updateStatus('preparing')
     printTask.currentJobName = params.fileName
 
-    const printer = params.printer || printerList.defaultPrinter
+    let printer = (params.printer ?? '').trim()
+    if (!printer) {
+      printer = printerList.effectiveDefaultPrinter || '__auto__'
+    } else if (printer !== '__auto__' && settings.printerBlacklist.includes(printer)) {
+      throw new Error('所选打印机已在隐藏列表中')
+    }
 
     try {
       const jobId = await invoke<number>('print_queue_submit', {
         req: {
           fileName: params.fileName,
           printType: params.type,
-          printer: printer || '',
+          printer: printer || '__auto__',
           copies: params.copies ?? 1,
           color: params.color ?? false,
           paperSize: params.paperSize ?? 'ISO_A4',
           direction: params.direction ?? 'PORTRAIT',
           serviceUrl: appConfig.serviceUrl,
+          printerBlacklist: settings.printerBlacklist,
         },
       })
 

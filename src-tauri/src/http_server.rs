@@ -56,14 +56,19 @@ impl HttpState {
     }
 }
 
+/// multipart 元数据（token 字段、边界）预留空间，与 `max_file_size` 叠加为整包上限
+const MULTIPART_OVERHEAD_BYTES: usize = 512 * 1024;
+
 /// 构建 axum 路由
 pub fn create_router(state: HttpState) -> Router {
+    let max_sz = state.inner.max_file_size as usize;
+    let body_limit = max_sz.saturating_add(MULTIPART_OVERHEAD_BYTES);
     Router::new()
         .route("/", get(index_handler))
         .route("/upload", post(upload_handler))
         .route("/api/health", get(health_handler))
         .layer(CorsLayer::permissive())
-        .layer(DefaultBodyLimit::max(100 * 1024 * 1024)) // 100MB body limit
+        .layer(DefaultBodyLimit::max(body_limit))
         .with_state(state)
 }
 
@@ -78,6 +83,8 @@ async fn health_handler() -> Json<serde_json::Value> {
 }
 
 /// POST /upload — 接收 multipart 文件上传
+///
+/// 文件内容先缓存在内存中，仅在 token 校验通过后再写入磁盘，避免「file 字段早于 token」时未授权落盘。
 async fn upload_handler(
     State(state): State<HttpState>,
     mut multipart: Multipart,
@@ -87,7 +94,8 @@ async fn upload_handler(
     };
 
     let mut token_value: Option<String> = None;
-    let mut saved_file: Option<String> = None;
+    // 校验通过后才落盘；解析阶段只暂存原始文件名与字节
+    let mut pending_file: Option<(String, Vec<u8>)> = None;
     let mut error: Option<String> = None;
 
     while let Ok(Some(field)) = multipart.next_field().await {
@@ -101,14 +109,6 @@ async fn upload_handler(
         }
 
         if field_name == "file" {
-            if let Some(ref t) = token_value {
-                if t != &state.inner.token {
-                    log("WARN", "token 校验失败：无效的访问令牌");
-                    error = Some("无效的访问令牌".to_string());
-                    break;
-                }
-            }
-
             let file_name = match field.file_name() {
                 Some(name) => name.to_string(),
                 None => {
@@ -133,7 +133,7 @@ async fn upload_handler(
             }
 
             let data = match field.bytes().await {
-                Ok(bytes) => bytes,
+                Ok(bytes) => bytes.to_vec(),
                 Err(e) => {
                     log("ERROR", &format!("读取文件数据失败: {} (文件: {})", e, file_name));
                     error = Some(format!("读取文件数据失败: {}", e));
@@ -157,51 +157,7 @@ async fn upload_handler(
                 break;
             }
 
-            let unique_name = format!(
-                "{}_{}",
-                chrono_free_timestamp(),
-                sanitize_filename(&file_name)
-            );
-            let dest = state.inner.files_dir.join(&unique_name);
-
-            if let Err(e) = std::fs::create_dir_all(&state.inner.files_dir) {
-                log("ERROR", &format!("创建存储目录失败: {}", e));
-                error = Some(format!("创建存储目录失败: {}", e));
-                break;
-            }
-
-            if let Err(e) = std::fs::write(&dest, &data) {
-                log("ERROR", &format!("保存文件失败: {} (文件: {})", e, file_name));
-                error = Some(format!("保存文件失败: {}", e));
-                break;
-            }
-
-            log("INFO", &format!(
-                "文件上传成功: {} → {} ({:.2} KB)",
-                file_name, unique_name, file_size as f64 / 1024.0
-            ));
-
-            saved_file = Some(unique_name);
-        }
-    }
-
-    if error.is_none() {
-        match &token_value {
-            None => {
-                log("WARN", "上传请求缺少访问令牌");
-                return Json(serde_json::json!({
-                    "code": 401,
-                    "msg": "缺少访问令牌"
-                }));
-            }
-            Some(t) if t != &state.inner.token => {
-                log("WARN", "token 校验失败：无效的访问令牌");
-                return Json(serde_json::json!({
-                    "code": 403,
-                    "msg": "无效的访问令牌"
-                }));
-            }
-            _ => {}
+            pending_file = Some((file_name, data));
         }
     }
 
@@ -212,20 +168,66 @@ async fn upload_handler(
         }));
     }
 
-    match saved_file {
-        Some(name) => Json(serde_json::json!({
-            "code": 0,
-            "msg": "上传成功",
-            "data": { "filename": name }
-        })),
+    match &token_value {
         None => {
-            log("WARN", "上传请求中未收到文件");
-            Json(serde_json::json!({
-                "code": 400,
-                "msg": "未收到文件"
-            }))
+            log("WARN", "上传请求缺少访问令牌");
+            return Json(serde_json::json!({
+                "code": 401,
+                "msg": "缺少访问令牌"
+            }));
         }
+        Some(t) if t != &state.inner.token => {
+            log("WARN", "token 校验失败：无效的访问令牌");
+            return Json(serde_json::json!({
+                "code": 403,
+                "msg": "无效的访问令牌"
+            }));
+        }
+        _ => {}
     }
+
+    let Some((file_name, data)) = pending_file else {
+        log("WARN", "上传请求中未收到文件");
+        return Json(serde_json::json!({
+            "code": 400,
+            "msg": "未收到文件"
+        }));
+    };
+
+    let unique_name = format!(
+        "{}_{}",
+        chrono_free_timestamp(),
+        sanitize_filename(&file_name)
+    );
+    let dest = state.inner.files_dir.join(&unique_name);
+
+    if let Err(e) = std::fs::create_dir_all(&state.inner.files_dir) {
+        log("ERROR", &format!("创建存储目录失败: {}", e));
+        return Json(serde_json::json!({
+            "code": 500,
+            "msg": format!("创建存储目录失败: {}", e)
+        }));
+    }
+
+    if let Err(e) = std::fs::write(&dest, &data) {
+        log("ERROR", &format!("保存文件失败: {} (文件: {})", e, file_name));
+        return Json(serde_json::json!({
+            "code": 500,
+            "msg": format!("保存文件失败: {}", e)
+        }));
+    }
+
+    let file_size = data.len() as f64 / 1024.0;
+    log("INFO", &format!(
+        "文件上传成功: {} → {} ({:.2} KB)",
+        file_name, unique_name, file_size
+    ));
+
+    Json(serde_json::json!({
+        "code": 0,
+        "msg": "上传成功",
+        "data": { "filename": unique_name }
+    }))
 }
 
 /// 启动 HTTP 服务，绑定到 0.0.0.0:{port}

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, provide } from 'vue'
+import { inject, onMounted, onUnmounted, ref, type Ref } from 'vue'
 import { Tooltip } from 'ant-design-vue'
 import { getPrintServers } from '../../api/print-api'
 
@@ -9,7 +9,7 @@ defineProps<{
 
 type Status = 'online' | 'offline' | 'connecting'
 
-const status = ref<Status>('connecting')
+const status = inject<Ref<Status>>('serviceStatus', ref<Status>('connecting'))
 let timer: ReturnType<typeof setInterval> | null = null
 
 async function checkConnection() {
@@ -35,8 +35,6 @@ onMounted(() => {
 onUnmounted(() => {
   if (timer) clearInterval(timer)
 })
-
-provide('serviceStatus', status)
 </script>
 
 <template>

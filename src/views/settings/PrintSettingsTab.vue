@@ -1,8 +1,23 @@
 <script setup lang="ts">
-import { Form, FormItem, Select, SelectOption, InputNumber, Switch, Radio, RadioGroup } from 'ant-design-vue'
+import { onMounted, computed } from 'vue'
+import {
+  Form,
+  FormItem,
+  Select,
+  SelectOption,
+  InputNumber,
+  Switch,
+  Radio,
+  RadioGroup,
+  Button,
+  Typography,
+} from 'ant-design-vue'
+import { ReloadOutlined } from '@ant-design/icons-vue'
 import { useSettings } from '../../stores/settings'
+import { usePrinterList } from '../../stores/printer-list'
 
 const settings = useSettings()
+const printerList = usePrinterList()
 
 const paperSizes = [
   { value: 'ISO_A3', label: 'A3' },
@@ -12,11 +27,42 @@ const paperSizes = [
   { value: 'NA_LETTER', label: 'Letter' },
   { value: 'NA_LEGAL', label: 'Legal' },
 ]
+
+const blacklistOptions = computed(() =>
+  printerList.allPrinters.map((p) => ({ label: p, value: p })),
+)
+
+onMounted(async () => {
+  if (printerList.allPrinters.length === 0) {
+    await printerList.refresh()
+  }
+})
 </script>
 
 <template>
   <div class="print-settings-tab">
-    <Form layout="vertical" style="max-width: 480px">
+    <Form layout="vertical" style="max-width: 560px">
+      <FormItem label="从列表中隐藏的打印机">
+        <div class="blacklist-row">
+          <Select
+            v-model:value="settings.printerBlacklist"
+            mode="multiple"
+            :options="blacklistOptions"
+            placeholder="先刷新打印机列表，再选择要隐藏的项"
+            style="flex: 1; min-width: 220px"
+            :max-tag-count="4"
+            allow-clear
+          />
+          <Button :loading="printerList.loading" @click="printerList.refresh()">
+            <template #icon><ReloadOutlined /></template>
+            刷新列表
+          </Button>
+        </div>
+        <Typography.Text type="secondary" style="font-size: 12px; display: block; margin-top: 6px">
+          隐藏后不在侧边栏与打印对话框中显示。「自动分配」仅在未被隐藏的打印机中随机选择。
+        </Typography.Text>
+      </FormItem>
+
       <FormItem label="默认打印机">
         <Select
           v-model:value="settings.defaultPrinter"
@@ -24,6 +70,9 @@ const paperSizes = [
           allow-clear
         >
           <SelectOption value="">自动选择</SelectOption>
+          <SelectOption v-for="p in printerList.visiblePrinters" :key="p" :value="p">
+            {{ p }}
+          </SelectOption>
         </Select>
       </FormItem>
 
@@ -65,5 +114,12 @@ const paperSizes = [
 <style scoped>
 .print-settings-tab {
   padding: 8px 0;
+}
+
+.blacklist-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 </style>

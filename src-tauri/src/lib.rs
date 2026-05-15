@@ -46,7 +46,7 @@ pub fn run() {
             // 启动 LAN HTTP 上传服务器
             let data_dir = app.path().app_data_dir().expect("无法获取 app_data_dir");
             let files_dir = data_dir.join("files");
-            let db_path = data_dir.join("print.db");
+            let app_db_path = data_dir.join("app.db");
             std::fs::create_dir_all(&files_dir).ok();
 
             let token: String = {
@@ -63,17 +63,12 @@ pub fn run() {
                 "txt", "htm", "html",
             ].into_iter().map(String::from).collect();
 
-            let db_for_http = app_state.db.lock().map_err(|e| e.to_string()).ok().and_then(|_| {
-                // Clone the db path for http_server to open its own connection
-                Some(db_path.clone())
-            });
-
             let state = http_server::HttpState::new(
                 token,
                 allowed_extensions,
                 50 * 1024 * 1024, // 50MB
                 files_dir,
-                db_for_http.unwrap_or(db_path.clone()),
+                app_db_path.clone(),
             );
 
             let port: u16 = 5000;
@@ -106,8 +101,7 @@ pub fn run() {
 
                     drop(conn);
 
-                    let db_path = data_dir.join("app.db");
-                    let c = rusqlite::Connection::open(&db_path)
+                    let c = rusqlite::Connection::open(&app_db_path)
                         .map_err(|e| format!("打开队列数据库连接失败: {}", e))?;
                     c
                 };
@@ -125,8 +119,28 @@ pub fn run() {
             let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
             let tray_menu = Menu::with_items(app, &[&show_item, &quit_item])?;
 
+            // 托盘与主窗口各需一份 Image（所有权分离）
             let tray_icon = Image::from_bytes(include_bytes!("../icons/tray-icon.png"))
                 .expect("无法加载托盘图标");
+            if let Some(main) = app.get_webview_window("main") {
+                let win_icon = Image::from_bytes(include_bytes!("../icons/tray-icon.png"))
+                    .expect("无法加载窗口图标");
+                if let Err(e) = main.set_icon(win_icon) {
+                    logger::log_warn(
+                        &app_state,
+                        "system",
+                        "rust:lib::setup",
+                        &format!("设置主窗口/任务栏图标失败: {}", e),
+                    );
+                } else {
+                    logger::log_info(
+                        &app_state,
+                        "system",
+                        "rust:lib::setup",
+                        "主窗口任务栏图标已应用",
+                    );
+                }
+            }
 
             TrayIconBuilder::new()
                 .icon(tray_icon)

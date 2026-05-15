@@ -4,6 +4,7 @@ import {
   Modal, Form, FormItem, InputNumber, Switch, RadioGroup, RadioButton, Select, Input, message,
 } from 'ant-design-vue'
 import { useSettings } from '../../stores/settings'
+import { usePrinterList } from '../../stores/printer-list'
 import { usePrintService } from '../../composables/usePrintService'
 import { getFileType } from '../../utils/file-types'
 import { PaperSizes } from '../../api/types'
@@ -22,6 +23,7 @@ const emit = defineEmits<{
 }>()
 
 const settings = useSettings()
+const printerList = usePrinterList()
 const { print } = usePrintService()
 
 const isBatch = computed(() => (props.fileNames?.length ?? 0) > 1)
@@ -47,7 +49,13 @@ const paperOptions = PaperSizes.map(s => ({ label: s, value: s }))
 
 watch(() => props.open, (val) => {
   if (val) {
-    form.printer = settings.defaultPrinter || '__auto__'
+    const vis = printerList.visiblePrinters
+    const def = settings.defaultPrinter.trim()
+    if (def && vis.includes(def)) {
+      form.printer = def
+    } else {
+      form.printer = '__auto__'
+    }
     form.paperSize = settings.defaultPaperSize || 'ISO_A4'
     form.copies = settings.defaultCopies || 1
     form.color = settings.defaultColor ?? false

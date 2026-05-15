@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, provide } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Menu, MenuItem, Button } from 'ant-design-vue'
 import {
@@ -21,6 +21,10 @@ defineProps<{
 const emit = defineEmits<{
   toggle: []
 }>()
+
+type ServiceConnStatus = 'online' | 'offline' | 'connecting'
+const serviceStatus = ref<ServiceConnStatus>('connecting')
+provide('serviceStatus', serviceStatus)
 
 const selectedKeys = computed(() => {
   const name = route.name as string

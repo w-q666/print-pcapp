@@ -8,6 +8,7 @@ import { useAppConfig } from './stores/app-config'
 import { useSettings } from './stores/settings'
 import { getPrintServers } from './api/print-api'
 import { setBaseURL } from './api/http-client'
+import { inferLanScanRangeFromIpv4 } from './utils/lan-scan-range'
 import DesktopLayout from './layouts/DesktopLayout.vue'
 import MobileLayout from './layouts/MobileLayout.vue'
 
@@ -24,18 +25,21 @@ const settings = useSettings()
 
 const discovering = ref(false)
 const discoverProgress = ref(0)
-const discoverDetail = ref('正在扫描本机网卡对应网段及配置的 IP 范围（最多 10 秒）…')
+const discoverDetail = ref('正在准备局域网发现…')
+
+/** 与后端动态超时大致匹配，仅用于遮罩进度条展示 */
+const DISCOVERY_UI_PROGRESS_MS = 120_000
 
 let progressTimer: ReturnType<typeof setInterval> | null = null
 
 function startDiscoverProgressUi() {
   discoverProgress.value = 0
-  discoverDetail.value = '正在扫描本机网卡对应网段及配置的 IP 范围（最多 10 秒）…'
+  discoverDetail.value = '正在扫描本机网卡与配置的 IP 范围（高并发，可能需要数十秒）…'
   const t0 = Date.now()
   progressTimer = setInterval(() => {
     const elapsed = Date.now() - t0
-    discoverProgress.value = Math.min(95, Math.floor((elapsed / 10000) * 100))
-  }, 120)
+    discoverProgress.value = Math.min(95, Math.floor((elapsed / DISCOVERY_UI_PROGRESS_MS) * 100))
+  }, 200)
 }
 
 function stopDiscoverProgressUi(done: boolean) {
@@ -66,7 +70,37 @@ async function checkServiceConnection(): Promise<boolean> {
 
 /** @returns 是否已可用（发现命中或默认地址可连） */
 async function bootstrapPrintDiscovery(): Promise<boolean> {
-  setBaseURL(`http://${appConfig.serviceHost}:${appConfig.servicePort}`)
+  const firstLaunch = !appConfig.isServiceHostPersisted
+
+  if (firstLaunch) {
+    try {
+      const localIp = await invoke<string>('get_network_local_ip')
+      if (localIp.trim()) {
+        appConfig.serviceHost = localIp.trim()
+      } else {
+        appConfig.serviceHost = 'localhost'
+      }
+    } catch {
+      appConfig.serviceHost = 'localhost'
+    }
+    appConfig.servicePort = 2024
+    await appConfig.saveToStore()
+    setBaseURL(`http://${appConfig.serviceHost}:${appConfig.servicePort}`)
+
+    try {
+      await getPrintServers()
+      return true
+    } catch {
+      const inferred = inferLanScanRangeFromIpv4(appConfig.serviceHost)
+      if (inferred) {
+        appConfig.scanStartIp = inferred.start
+        appConfig.scanEndIp = inferred.end
+        await appConfig.saveToStore()
+      }
+    }
+  } else {
+    setBaseURL(`http://${appConfig.serviceHost}:${appConfig.servicePort}`)
+  }
 
   let result: DiscoverScanResult | null = null
   try {
@@ -91,7 +125,7 @@ async function bootstrapPrintDiscovery(): Promise<boolean> {
   }
 
   if (result) {
-    discoverDetail.value = `未发现可用服务（已探测 ${result.scannedCount} 个地址，耗时 ${result.elapsedMs} ms）。请确认 Java 服务已启动，或将「默认服务 IP」直接设为打印主机（如 192.168.137.29）。`
+    discoverDetail.value = `未发现可用服务（已探测 ${result.scannedCount} 个地址，耗时 ${result.elapsedMs} ms）。请确认 Java 服务已启动，或将「默认服务 IP」直接设为打印主机。`
   } else {
     discoverDetail.value = '发现过程出错，将尝试连接当前默认地址。'
   }

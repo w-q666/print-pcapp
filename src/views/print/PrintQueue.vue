@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Card, Empty, Tag, Button, Space, Progress } from 'ant-design-vue'
+import { Card, Empty, Tag, Button, Progress } from 'ant-design-vue'
 import {
-  ReloadOutlined, CloseCircleOutlined, RedoOutlined,
+  ReloadOutlined, CloseCircleOutlined,
   CheckCircleOutlined, PrinterOutlined, ClockCircleOutlined,
   LoadingOutlined,
 } from '@ant-design/icons-vue'
@@ -82,13 +82,7 @@ refresh()
               <div class="job-meta">{{ job.printer }} · {{ job.finished_at || job.created_at }}</div>
             </div>
           </div>
-          <Space>
-            <Tag :color="statusConfig[job.status]?.color">{{ statusConfig[job.status]?.label || job.status }}</Tag>
-            <Button v-if="job.status === 'failed'" size="small" type="link">
-              <template #icon><RedoOutlined /></template>
-              重试
-            </Button>
-          </Space>
+          <Tag :color="statusConfig[job.status]?.color">{{ statusConfig[job.status]?.label || job.status }}</Tag>
         </div>
       </Card>
     </div>

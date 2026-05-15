@@ -26,6 +26,8 @@ export const useSettings = defineStore('settings', () => {
   })
 
   const defaultPrinter = ref('')
+  /** 按打印机显示名隐藏，与 Java getPrintServers 返回字符串一致 */
+  const printerBlacklist = ref<string[]>([])
   const defaultPaperSize = ref('ISO_A4')
   const defaultCopies = ref(1)
   const defaultColor = ref(false)
@@ -63,6 +65,8 @@ export const useSettings = defineStore('settings', () => {
 
       const p = await store.get<string>('defaultPrinter')
       if (p !== null && p !== undefined) defaultPrinter.value = p
+      const bl = await store.get<string[]>('printerBlacklist')
+      if (Array.isArray(bl)) printerBlacklist.value = bl.filter((x): x is string => typeof x === 'string')
       const ps = await store.get<string>('defaultPaperSize')
       if (ps) defaultPaperSize.value = ps
       const c = await store.get<number>('defaultCopies')
@@ -83,6 +87,15 @@ export const useSettings = defineStore('settings', () => {
     }
   }
 
+  /** 若当前默认打印机不在可见列表中（例如被加入隐藏列表），改为首个可见项或清空 */
+  function reconcileDefaultPrinterWithVisible(visible: string[]) {
+    const def = defaultPrinter.value.trim()
+    if (!def) return
+    if (!visible.includes(def)) {
+      defaultPrinter.value = visible[0] ?? ''
+    }
+  }
+
   async function saveToStore() {
     try {
       const { Store } = await import('@tauri-apps/plugin-store')
@@ -95,6 +108,7 @@ export const useSettings = defineStore('settings', () => {
       await store.set('allowedExtensions', extSnapshot)
 
       await store.set('defaultPrinter', defaultPrinter.value)
+      await store.set('printerBlacklist', [...printerBlacklist.value])
       await store.set('defaultPaperSize', defaultPaperSize.value)
       await store.set('defaultCopies', defaultCopies.value)
       await store.set('defaultColor', defaultColor.value)
@@ -112,8 +126,8 @@ export const useSettings = defineStore('settings', () => {
 
   return {
     allowedExtensions,
-    defaultPrinter, defaultPaperSize, defaultCopies, defaultColor, defaultDirection,
+    defaultPrinter, printerBlacklist, defaultPaperSize, defaultCopies, defaultColor, defaultDirection,
     lanPort, logLevel, autoStart,
-    getAllowedExtList, loadFromStore, saveToStore,
+    getAllowedExtList, loadFromStore, saveToStore, reconcileDefaultPrinterWithVisible,
   }
 })

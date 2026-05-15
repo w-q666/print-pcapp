@@ -1,25 +1,78 @@
 .titlebar {
-  height: var(--titlebar-height);
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  flex-direction: column;
   flex-shrink: 0;
+  min-height: var(--titlebar-height);
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-primary);
   position: relative;
   z-index: 100;
 }
 
-.titlebar-drag {
+.titlebar--settings {
+  min-height: auto;
+}
+
+.titlebar-main-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  height: var(--titlebar-height);
+  min-height: var(--titlebar-height);
+}
+
+.titlebar-drag-zone {
   flex: 1;
-  height: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 12px;
+  padding-right: 4px;
   -webkit-app-region: drag;
   app-region: drag;
+}
+
+.titlebar-app {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.titlebar-sep {
+  flex-shrink: 0;
+  color: var(--border-color);
+  font-size: 12px;
+  user-select: none;
+}
+
+.titlebar-page-title {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+}
+
+.titlebar-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 0 8px 0 4px;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
 }
 
 .titlebar-controls {
   display: flex;
   height: 100%;
+  flex-shrink: 0;
   -webkit-app-region: no-drag;
   app-region: no-drag;
 }
@@ -50,4 +103,18 @@
 .titlebar-btn svg {
   width: 14px;
   height: 14px;
+}
+
+/* 系统配置：四个分区固定在顶栏第二行，避免主内容区 flex 把 Tabs 压没 */
+.titlebar-settings-row {
+  padding: 4px 10px 6px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-content);
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.titlebar-settings-segmented {
+  width: 100%;
+  max-width: 100%;
 }

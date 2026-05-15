@@ -4,6 +4,31 @@
   padding: 0;
 }
 
+/* 仅内容区滚动：整页不滚，把高度交给子级 flex 分配 */
+.base-page--scroll-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.base-page--scroll-content .base-page-content {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 桌面端标题与操作已并入 TitleBar，内容区顶对齐 */
+.base-page--desktop-integrated .base-page-content {
+  padding-top: 8px;
+}
+
+.base-page--scroll-content.base-page--desktop-integrated .base-page-content {
+  padding-top: 4px;
+}
+
 .base-page-header {
   position: sticky;
   top: 0;

@@ -162,17 +162,30 @@ async fn probe_one(client: &reqwest::Client, host: &str, port: u16) -> bool {
     }
 }
 
+/// 并发探测上限（提高以缩短全网段扫描时间；仍受单请求超时与总预算约束）
+const DISCOVERY_CONCURRENCY: usize = 128;
+const PER_PROBE_TIMEOUT_SECS: u64 = 3;
+
 pub async fn discover_print_service(config: ScanConfig) -> Result<ScanResult, String> {
     let instant = Instant::now();
     let scanned_total = Arc::new(AtomicUsize::new(0));
     let targets = build_targets(&config)?;
     let cancel = CancellationToken::new();
-    let sem = Arc::new(Semaphore::new(20));
+    let sem = Arc::new(Semaphore::new(DISCOVERY_CONCURRENCY));
     let port = config.port;
+
+    let n = targets.len().max(1);
+    let waves = (n + DISCOVERY_CONCURRENCY - 1) / DISCOVERY_CONCURRENCY;
+    let total_timeout_secs = ((waves as u64)
+        .saturating_mul(PER_PROBE_TIMEOUT_SECS)
+        .saturating_add(25))
+    .min(180)
+    .max(45);
+    let total_timeout = Duration::from_secs(total_timeout_secs);
 
     let client = reqwest::Client::builder()
         .connect_timeout(Duration::from_secs(2))
-        .timeout(Duration::from_secs(3))
+        .timeout(Duration::from_secs(PER_PROBE_TIMEOUT_SECS))
         .build()
         .map_err(|e| e.to_string())?;
 
@@ -215,7 +228,7 @@ pub async fn discover_print_service(config: ScanConfig) -> Result<ScanResult, St
             }
             found
         } => h,
-        _ = tokio::time::sleep(Duration::from_secs(10)) => {
+        _ = tokio::time::sleep(total_timeout) => {
             cancel_for_timeout.cancel();
             None
         }
