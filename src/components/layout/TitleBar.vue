@@ -28,7 +28,7 @@ async function handleToggleMaximize() {
 }
 
 async function handleClose() {
-  await getCurrentWindow().close()
+  await getCurrentWindow().hide()
 }
 </script>
 

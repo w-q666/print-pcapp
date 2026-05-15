@@ -13,6 +13,7 @@ let hideTimer: ReturnType<typeof setTimeout> | null = null
 
 const statusConfig = computed(() => {
   switch (printTask.currentStatus) {
+    case 'queued': return { icon: LoadingOutlined, color: '#722ed1', text: '已加入打印队列' }
     case 'connecting': return { icon: LoadingOutlined, color: '#1890ff', text: '正在连接...' }
     case 'preparing': return { icon: LoadingOutlined, color: '#1890ff', text: '准备打印...' }
     case 'printing': return { icon: PrinterOutlined, color: '#1890ff', text: '正在打印...' }
@@ -27,7 +28,7 @@ const statusConfig = computed(() => {
 })
 
 const isSpinning = computed(() =>
-  ['connecting', 'preparing', 'printing', 'data_sent'].includes(printTask.currentStatus)
+  ['queued', 'connecting', 'preparing', 'printing', 'data_sent'].includes(printTask.currentStatus)
 )
 
 watch(() => printTask.currentStatus, (status) => {

@@ -32,6 +32,7 @@ export const PrintStatusCode = {
 
 export type PrintStatus =
   | 'idle'
+  | 'queued'
   | 'connecting'
   | 'connected'
   | 'preparing'

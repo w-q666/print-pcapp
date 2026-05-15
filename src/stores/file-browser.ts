@@ -10,34 +10,52 @@ export interface FileItem {
   dateLabel: string
 }
 
+function toFileItem(info: FileInfo): FileItem {
+  return {
+    name: info.name,
+    extension: info.name.substring(info.name.lastIndexOf('.')).toLowerCase(),
+    size: info.size,
+    modified_at: info.modified_at,
+    dateLabel: info.modified_at > 0
+      ? new Date(info.modified_at * 1000).toLocaleString('zh-CN', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit',
+        })
+      : '',
+  }
+}
+
 export const useFileBrowser = defineStore('file-browser', () => {
   const files = ref<FileItem[]>([])
   const loading = ref(false)
   const sortBy = ref<'name' | 'extension'>('name')
   const selected = ref<Set<string>>(new Set())
 
+  const page = ref(1)
+  const pageSize = ref(50)
+  const total = ref(0)
+
   const { listFiles, deleteFile } = useFileSystem()
 
   async function refresh() {
     loading.value = true
     try {
-      const infos: FileInfo[] = await listFiles()
-      files.value = infos.map(info => ({
-        name: info.name,
-        extension: info.name.substring(info.name.lastIndexOf('.')).toLowerCase(),
-        size: info.size,
-        modified_at: info.modified_at,
-        dateLabel: info.modified_at > 0
-          ? new Date(info.modified_at * 1000).toLocaleString('zh-CN', {
-              year: 'numeric', month: '2-digit', day: '2-digit',
-              hour: '2-digit', minute: '2-digit',
-            })
-          : '',
-      }))
+      const result = await listFiles(page.value, pageSize.value)
+      files.value = result.files.map(toFileItem)
+      total.value = result.total
       selected.value = new Set()
     } finally {
       loading.value = false
     }
+  }
+
+  function changePage(newPage: number, newPageSize?: number) {
+    page.value = newPage
+    if (newPageSize && newPageSize !== pageSize.value) {
+      pageSize.value = newPageSize
+      page.value = 1
+    }
+    refresh()
   }
 
   async function remove(name: string) {
@@ -90,8 +108,9 @@ export const useFileBrowser = defineStore('file-browser', () => {
 
   return {
     files, loading, sortBy, selected, sortedFiles,
+    page, pageSize, total,
     isAllSelected, hasSelection,
-    refresh, remove, removeSelected, removeAll,
+    refresh, changePage, remove, removeSelected, removeAll,
     toggleSelect, selectAll, clearSelection,
   }
 })

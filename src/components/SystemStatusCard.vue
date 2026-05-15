@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
+import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 
 const queueCount = ref(0)
 const todayCount = ref(0)
 const loading = ref(true)
 let timer: ReturnType<typeof setInterval> | null = null
+let unlisten: UnlistenFn | null = null
 
 async function fetchCounts() {
   try {
     const [queue, today] = await Promise.all([
-      invoke<number>('print_jobs_count_queue'),
+      invoke<number>('print_queue_pending_count'),
       invoke<number>('print_jobs_count_today'),
     ])
     queueCount.value = queue
@@ -22,13 +24,17 @@ async function fetchCounts() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   fetchCounts()
   timer = setInterval(fetchCounts, 10000)
+  unlisten = await listen('print-job-update', () => {
+    fetchCounts()
+  })
 })
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)
+  if (unlisten) unlisten()
 })
 </script>
 

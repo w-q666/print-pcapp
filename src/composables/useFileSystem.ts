@@ -42,11 +42,16 @@ export function useFileSystem() {
     }
   }
 
-  async function listFiles(): Promise<FileInfo[]> {
+  interface FileListPage {
+    files: FileInfo[]
+    total: number
+  }
+
+  async function listFiles(page?: number, pageSize?: number): Promise<FileListPage> {
     try {
-      const files = await invoke<FileInfo[]>('file_list')
-      logger.debug('file', `file list: ${files.length} files`)
-      return files
+      const result = await invoke<FileListPage>('file_list', { page, pageSize })
+      logger.debug('file', `file list: ${result.files.length}/${result.total} files (page ${page ?? 1})`)
+      return result
     } catch (err) {
       logger.error('file', `file list failed: ${err}`)
       throw err

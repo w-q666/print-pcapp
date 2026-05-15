@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { reactive, computed, watch } from 'vue'
 import {
   Modal, Form, FormItem, InputNumber, Switch, RadioGroup, RadioButton, Select, Input, message,
 } from 'ant-design-vue'
@@ -11,8 +11,9 @@ import PrinterSelector from './PrinterSelector.vue'
 
 const props = defineProps<{
   open: boolean
-  fileName: string
-  filePath: string
+  fileName?: string
+  filePath?: string
+  fileNames?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -23,8 +24,19 @@ const emit = defineEmits<{
 const settings = useSettings()
 const { print } = usePrintService()
 
+const isBatch = computed(() => (props.fileNames?.length ?? 0) > 1)
+
+const displayTitle = computed(() =>
+  isBatch.value ? `批量打印设置 (${props.fileNames!.length} 个文件)` : '打印设置',
+)
+
+const displayFileName = computed(() => {
+  if (isBatch.value) return `已选择 ${props.fileNames!.length} 个文件`
+  return props.fileName || props.fileNames?.[0] || ''
+})
+
 const form = reactive({
-  printer: '',
+  printer: '__auto__',
   paperSize: 'ISO_A4',
   copies: 1,
   color: false,
@@ -35,7 +47,7 @@ const paperOptions = PaperSizes.map(s => ({ label: s, value: s }))
 
 watch(() => props.open, (val) => {
   if (val) {
-    form.printer = settings.defaultPrinter || ''
+    form.printer = settings.defaultPrinter || '__auto__'
     form.paperSize = settings.defaultPaperSize || 'ISO_A4'
     form.copies = settings.defaultCopies || 1
     form.color = settings.defaultColor ?? false
@@ -46,30 +58,47 @@ watch(() => props.open, (val) => {
 const submitting = reactive({ value: false })
 
 async function handleSubmit() {
-  const fileType = getFileType(props.fileName)
-  if (!fileType) {
-    message.error('不支持的文件格式')
+  const names = props.fileNames?.length ? props.fileNames : (props.fileName ? [props.fileName] : [])
+  if (names.length === 0) return
+
+  const unsupported = names.filter(n => !getFileType(n))
+  if (unsupported.length > 0) {
+    message.error(`不支持的文件格式: ${unsupported.join(', ')}`)
     return
   }
 
   submitting.value = true
+  let successCount = 0
+  let failCount = 0
+
   try {
-    await print({
-      fileName: props.fileName,
-      filePath: props.filePath,
-      type: fileType,
-      source: 'blob',
-      printer: form.printer,
-      copies: form.copies,
-      color: form.color,
-      paperSize: form.paperSize,
-      direction: form.direction,
-    })
-    message.success('打印任务已提交')
+    for (const name of names) {
+      try {
+        await print({
+          fileName: name,
+          filePath: name,
+          type: getFileType(name)!,
+          source: 'blob',
+          printer: form.printer,
+          copies: form.copies,
+          color: form.color,
+          paperSize: form.paperSize,
+          direction: form.direction,
+        })
+        successCount++
+      } catch {
+        failCount++
+      }
+    }
+
+    if (failCount === 0) {
+      message.success(isBatch.value ? `${successCount} 个文件已加入打印队列` : '打印任务已提交')
+    } else {
+      message.warning(`${successCount} 个成功，${failCount} 个失败`)
+    }
+
     emit('update:open', false)
     emit('submitted')
-  } catch (e: unknown) {
-    message.error(e instanceof Error ? e.message : '打印失败')
   } finally {
     submitting.value = false
   }
@@ -83,7 +112,7 @@ function handleCancel() {
 <template>
   <Modal
     :open="open"
-    title="打印设置"
+    :title="displayTitle"
     ok-text="开始打印"
     cancel-text="取消"
     :confirm-loading="submitting.value"
@@ -92,8 +121,8 @@ function handleCancel() {
     :width="520"
   >
     <Form layout="vertical" style="margin-top: 16px">
-      <FormItem label="文件名称">
-        <Input :value="fileName" disabled />
+      <FormItem :label="isBatch ? '打印文件' : '文件名称'">
+        <Input :value="displayFileName" disabled />
       </FormItem>
       <FormItem label="打印机">
         <PrinterSelector v-model="form.printer" />

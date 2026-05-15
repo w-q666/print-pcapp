@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { Button, Checkbox, Empty, Spin, Modal, Popconfirm, RadioGroup, RadioButton, message } from 'ant-design-vue'
-import { ReloadOutlined, DeleteOutlined, ClearOutlined } from '@ant-design/icons-vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { Button, Checkbox, Empty, Spin, Modal, Popconfirm, RadioGroup, RadioButton, Pagination, message } from 'ant-design-vue'
+import { ReloadOutlined, DeleteOutlined, ClearOutlined, PrinterOutlined } from '@ant-design/icons-vue'
 import BasePage from '../../components/layout/BasePage.vue'
 import FileUploadZone from '../../components/FileUploadZone.vue'
 import FileListItem from '../../components/FileListItem.vue'
@@ -34,10 +34,21 @@ function openPreview(name: string) {
 const printDialogOpen = ref(false)
 const printFileName = ref('')
 const printFilePath = ref('')
+const printFileNames = ref<string[]>([])
 
 function openPrint(name: string) {
   printFileName.value = name
   printFilePath.value = name
+  printFileNames.value = [name]
+  printDialogOpen.value = true
+}
+
+function openBatchPrint() {
+  const names = [...fileBrowser.selected]
+  if (names.length === 0) return
+  printFileNames.value = names
+  printFileName.value = ''
+  printFilePath.value = ''
   printDialogOpen.value = true
 }
 
@@ -84,8 +95,18 @@ function handleSelectAll() {
   else fileBrowser.selectAll()
 }
 
-onMounted(() => {
+let unlistenFileChanged: (() => void) | null = null
+
+onMounted(async () => {
   fileBrowser.refresh()
+  const { listen } = await import('@tauri-apps/api/event')
+  unlistenFileChanged = await listen('file-changed', () => {
+    fileBrowser.refresh()
+  })
+})
+
+onUnmounted(() => {
+  if (unlistenFileChanged) unlistenFileChanged()
 })
 </script>
 
@@ -122,6 +143,10 @@ onMounted(() => {
             <span class="file-count">共 <b>{{ fileBrowser.sortedFiles.length }}</b> 个文件</span>
             <template v-if="selectionMode && fileBrowser.hasSelection">
               <span class="file-count">· 已选 <b>{{ fileBrowser.selected.size }}</b> 个</span>
+              <Button size="small" type="primary" @click="openBatchPrint">
+                <template #icon><PrinterOutlined /></template>
+                批量打印
+              </Button>
               <Popconfirm title="确定删除选中的文件？" ok-text="删除" cancel-text="取消" @confirm="handleBatchDelete">
                 <Button size="small" type="primary" danger>
                   <template #icon><DeleteOutlined /></template>
@@ -154,6 +179,17 @@ onMounted(() => {
             />
           </div>
         </Spin>
+        <div v-if="fileBrowser.total > fileBrowser.pageSize" class="file-pagination">
+          <Pagination
+            :current="fileBrowser.page"
+            :page-size="fileBrowser.pageSize"
+            :total="fileBrowser.total"
+            size="small"
+            show-size-changer
+            :page-size-options="['20', '50', '100']"
+            @change="fileBrowser.changePage"
+          />
+        </div>
       </div>
 
       <div class="home-aside">
@@ -181,6 +217,7 @@ onMounted(() => {
       v-model:open="printDialogOpen"
       :file-name="printFileName"
       :file-path="printFilePath"
+      :file-names="printFileNames"
       @submitted="fileBrowser.refresh()"
     />
   </BasePage>
@@ -228,6 +265,12 @@ onMounted(() => {
   border: 1px solid #f0f0f0;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.file-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
 }
 
 @media (max-width: 900px) {

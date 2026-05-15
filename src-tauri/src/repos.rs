@@ -143,6 +143,16 @@ impl PrintJobRepo {
         Ok(())
     }
 
+    pub fn update_printer(db: &Mutex<Connection>, id: i64, printer: &str) -> Result<(), String> {
+        let conn = db.lock().map_err(|e| e.to_string())?;
+        conn.execute(
+            "UPDATE print_jobs SET printer = ?1 WHERE id = ?2",
+            rusqlite::params![printer, id],
+        )
+        .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
     pub fn count_by_status(db: &Mutex<Connection>, status: &str) -> Result<i64, String> {
         let conn = db.lock().map_err(|e| e.to_string())?;
         conn.query_row(
