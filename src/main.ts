@@ -40,4 +40,8 @@ window.addEventListener('unhandledrejection', (event) => {
   logGlobalError(`[Promise] ${event.reason}`)
 })
 
+if (!import.meta.env.DEV) {
+  document.addEventListener('contextmenu', (e) => e.preventDefault())
+}
+
 app.mount('#app')
