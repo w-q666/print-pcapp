@@ -4,11 +4,14 @@ import { Tabs, Button, message } from 'ant-design-vue'
 import { SaveOutlined } from '@ant-design/icons-vue'
 import BasePage from '../../components/layout/BasePage.vue'
 import { useSettings } from '../../stores/settings'
+import { useAppConfig } from '../../stores/app-config'
+import { validateScanRange, validateDefaultServiceHost } from '../../utils/ip-range'
 import FileFormatTab from './FileFormatTab.vue'
 import PrintSettingsTab from './PrintSettingsTab.vue'
 import SystemSettingsTab from './SystemSettingsTab.vue'
 
 const settings = useSettings()
+const appConfig = useAppConfig()
 const activeTab = ref('fileFormat')
 const saving = ref(false)
 
@@ -19,9 +22,20 @@ const tabItems = [
 ]
 
 async function handleSave() {
+  const hostV = validateDefaultServiceHost(appConfig.serviceHost)
+  if (!hostV.ok) {
+    message.error(hostV.message ?? '默认服务 IP 不合法')
+    return
+  }
+  const scanV = validateScanRange(appConfig.scanStartIp, appConfig.scanEndIp)
+  if (!scanV.ok) {
+    message.error(scanV.message ?? '扫描范围不合法')
+    return
+  }
   saving.value = true
   try {
-    await settings.saveToStore()
+    appConfig.scanRangeInferredOnce = true
+    await Promise.all([settings.saveToStore(), appConfig.saveToStore()])
     message.success('配置已保存')
   } catch {
     message.error('保存失败')

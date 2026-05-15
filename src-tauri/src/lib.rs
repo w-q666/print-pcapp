@@ -1,14 +1,20 @@
 mod commands;
 mod db;
+mod discovery;
 mod entities;
 mod http_server;
 pub mod logger;
 mod network;
+mod print_queue;
 mod qr;
 mod repos;
 
 use db::{init_db, AppState};
 use tauri::Manager;
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri::menu::{Menu, MenuItem};
+use tauri::image::Image;
+use tauri::WindowEvent;
 
 /// 存储 LAN 服务器的 token，供 commands 读取
 pub struct LanServerToken(pub String);
@@ -84,9 +90,88 @@ pub fn run() {
                 }
             });
 
+            // 初始化打印队列
+            {
+                let queue_conn = {
+                    let conn = app_state.db.lock().map_err(|e| e.to_string())?;
+                    print_queue::init_queue_table(&conn)?;
+
+                    let recovered = print_queue::recover_stale_tasks(&conn)?;
+                    if recovered > 0 {
+                        logger::log_warn(
+                            &app_state, "system", "rust:lib::setup",
+                            &format!("恢复了 {} 个崩溃遗留的打印任务", recovered),
+                        );
+                    }
+
+                    drop(conn);
+
+                    let db_path = data_dir.join("app.db");
+                    let c = rusqlite::Connection::open(&db_path)
+                        .map_err(|e| format!("打开队列数据库连接失败: {}", e))?;
+                    c
+                };
+
+                let queue_state = print_queue::QueueState {
+                    db: std::sync::Arc::new(std::sync::Mutex::new(queue_conn)),
+                };
+                app.manage(queue_state);
+                print_queue::spawn_worker(app.handle());
+                logger::log_info(&app_state, "system", "rust:lib::setup", "打印队列初始化完成");
+            }
+
+            // 创建系统托盘
+            let show_item = MenuItem::with_id(app, "show", "显示主窗口", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
+            let tray_menu = Menu::with_items(app, &[&show_item, &quit_item])?;
+
+            let tray_icon = Image::from_bytes(include_bytes!("../icons/tray-icon.png"))
+                .expect("无法加载托盘图标");
+
+            TrayIconBuilder::new()
+                .icon(tray_icon)
+                .tooltip("网络打印服务")
+                .menu(&tray_menu)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "show" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.unminimize();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.unminimize();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app)?;
+
+            logger::log_info(&app_state, "system", "rust:lib::setup", "系统托盘已创建");
             logger::log_info(&app_state, "system", "rust:lib::setup", "应用启动完成");
 
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
         })
         .invoke_handler(tauri::generate_handler![
             greet,
@@ -107,6 +192,11 @@ pub fn run() {
             commands::file_list,
             commands::lan_server_url,
             commands::lan_server_qrcode,
+            commands::discover_service,
+            commands::get_network_local_ip,
+            commands::print_queue_submit,
+            commands::print_queue_pending_count,
+            commands::print_queue_list,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

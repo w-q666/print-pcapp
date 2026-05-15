@@ -1,11 +1,22 @@
 use std::fs;
 use std::path::Path;
-use tauri::AppHandle;
-use tauri::Manager;
+use tauri::{AppHandle, Emitter, Manager};
 use crate::db::AppState;
+use crate::discovery::{self, ScanConfig, ScanResult};
 use crate::entities::{CreatePrintJobRequest, PrintJob, SystemLog};
 use crate::logger;
+use crate::network;
 use crate::repos::{PrintJobRepo, SystemLogRepo};
+
+#[tauri::command]
+pub async fn discover_service(config: ScanConfig) -> Result<ScanResult, String> {
+    discovery::discover_print_service(config).await
+}
+
+#[tauri::command]
+pub fn get_network_local_ip() -> Result<String, String> {
+    network::get_local_ip()
+}
 
 fn safe_filename(name: &str) -> Result<String, String> {
     Path::new(name)
@@ -177,6 +188,84 @@ fn csv_escape(s: &str) -> String {
     s.replace('"', "\"\"")
 }
 
+// ── Print queue commands ──
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueueSubmitRequest {
+    pub file_name: String,
+    pub print_type: String,
+    pub printer: String,
+    pub copies: Option<i32>,
+    pub color: Option<bool>,
+    pub paper_size: Option<String>,
+    pub direction: Option<String>,
+    pub service_url: String,
+}
+
+#[tauri::command]
+pub fn print_queue_submit(
+    app_handle: AppHandle,
+    state: tauri::State<'_, AppState>,
+    queue: tauri::State<'_, crate::print_queue::QueueState>,
+    req: QueueSubmitRequest,
+) -> Result<i64, String> {
+    let job = PrintJobRepo::create(
+        state.db(),
+        &CreatePrintJobRequest {
+            name: req.file_name.clone(),
+            printer: Some(req.printer.clone()),
+            print_type: Some(req.print_type.clone()),
+            source: Some("desktop".to_string()),
+            copies: Some(req.copies.unwrap_or(1)),
+            file_path: Some(req.file_name.clone()),
+            file_size: None,
+        },
+    )?;
+
+    logger::log_info(
+        &state, "print", "rust:commands::print_queue_submit",
+        &format!("打印任务入队: {} (ID: {})", req.file_name, job.id),
+    );
+
+    let task = crate::print_queue::PrintTask {
+        job_id: job.id,
+        file_name: req.file_name,
+        print_type: req.print_type,
+        printer: req.printer,
+        copies: req.copies.unwrap_or(1),
+        color: req.color.unwrap_or(false),
+        paper_size: req.paper_size.unwrap_or_else(|| "ISO_A4".to_string()),
+        direction: req.direction.unwrap_or_else(|| "PORTRAIT".to_string()),
+        service_url: req.service_url,
+    };
+
+    crate::print_queue::push_task(&queue.db, &task)?;
+
+    let _ = app_handle.emit("print-job-update", crate::print_queue::PrintJobEvent {
+        job_id: job.id,
+        file_name: job.name.clone(),
+        status: "queued".to_string(),
+        error_msg: None,
+    });
+
+    Ok(job.id)
+}
+
+#[tauri::command]
+pub fn print_queue_pending_count(
+    queue: tauri::State<'_, crate::print_queue::QueueState>,
+) -> Result<i64, String> {
+    crate::print_queue::pending_count(&queue.db)
+}
+
+#[tauri::command]
+pub fn print_queue_list(
+    queue: tauri::State<'_, crate::print_queue::QueueState>,
+) -> Result<Vec<crate::print_queue::QueueItem>, String> {
+    crate::print_queue::list_queue(&queue.db)
+}
+
 // ── LAN server commands ──
 
 #[tauri::command]
@@ -283,21 +372,12 @@ pub fn file_delete(
     }
 }
 
-#[tauri::command]
-pub fn file_list(
-    app_handle: AppHandle,
-    state: tauri::State<'_, AppState>,
-) -> Result<Vec<crate::entities::FileInfo>, String> {
-    let data_dir = app_handle
-        .path()
-        .app_data_dir()
-        .map_err(|e| e.to_string())?;
-    let files_dir = data_dir.join("files");
+fn read_all_files(files_dir: &std::path::Path) -> Result<Vec<crate::entities::FileInfo>, String> {
     if !files_dir.exists() {
         return Ok(Vec::new());
     }
     let mut files = Vec::new();
-    let entries = fs::read_dir(&files_dir).map_err(|e| e.to_string())?;
+    let entries = fs::read_dir(files_dir).map_err(|e| e.to_string())?;
     for entry in entries {
         let entry = entry.map_err(|e| e.to_string())?;
         if entry.file_type().map_err(|e| e.to_string())?.is_file() {
@@ -317,7 +397,38 @@ pub fn file_list(
             });
         }
     }
-    logger::log_debug(&state, "file", "rust:commands::file_list",
-        &format!("文件列表查询完成，共 {} 个文件", files.len()));
+    files.sort_by(|a, b| b.modified_at.cmp(&a.modified_at));
     Ok(files)
+}
+
+#[derive(serde::Serialize)]
+pub struct FileListPage {
+    pub files: Vec<crate::entities::FileInfo>,
+    pub total: usize,
+}
+
+#[tauri::command]
+pub fn file_list(
+    app_handle: AppHandle,
+    state: tauri::State<'_, AppState>,
+    page: Option<usize>,
+    page_size: Option<usize>,
+) -> Result<FileListPage, String> {
+    let data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?;
+    let files_dir = data_dir.join("files");
+    let all_files = read_all_files(&files_dir)?;
+    let total = all_files.len();
+
+    let ps = page_size.unwrap_or(50);
+    let p = page.unwrap_or(1).max(1);
+    let offset = (p - 1) * ps;
+
+    let page_files: Vec<_> = all_files.into_iter().skip(offset).take(ps).collect();
+
+    logger::log_debug(&state, "file", "rust:commands::file_list",
+        &format!("文件列表查询完成，共 {} 个文件，第 {} 页", total, p));
+    Ok(FileListPage { files: page_files, total })
 }
