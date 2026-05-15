@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { notification, ConfigProvider, Spin, Progress, Typography } from 'ant-design-vue'
 import { invoke } from '@tauri-apps/api/core'
 import { usePlatform } from './composables/usePlatform'
@@ -17,6 +18,7 @@ interface DiscoverScanResult {
 }
 
 const { platform, detect } = usePlatform()
+const router = useRouter()
 const appConfig = useAppConfig()
 const settings = useSettings()
 
@@ -48,19 +50,22 @@ onUnmounted(() => {
   stopDiscoverProgressUi(false)
 })
 
-async function checkServiceConnection() {
+async function checkServiceConnection(): Promise<boolean> {
   try {
     await getPrintServers()
+    return true
   } catch {
     notification.warning({
       message: '服务连接失败',
-      description: '无法连接到打印服务。若服务在其它网段，请在「系统配置 → 系统设置」将默认服务 IP 设为该主机，或填写正确的扫描范围。',
+      description: '无法连接到打印服务。已打开「系统配置」，请检查默认服务 IP、端口与扫描范围。',
       duration: 8,
     })
+    return false
   }
 }
 
-async function bootstrapPrintDiscovery() {
+/** @returns 是否已可用（发现命中或默认地址可连） */
+async function bootstrapPrintDiscovery(): Promise<boolean> {
   setBaseURL(`http://${appConfig.serviceHost}:${appConfig.servicePort}`)
 
   let result: DiscoverScanResult | null = null
@@ -82,7 +87,7 @@ async function bootstrapPrintDiscovery() {
     setBaseURL(`http://${appConfig.serviceHost}:${appConfig.servicePort}`)
     await appConfig.saveToStore()
     discoverDetail.value = `已发现服务：${result.foundHost}（本次探测 ${result.scannedCount} 次，耗时 ${result.elapsedMs} ms）`
-    return
+    return true
   }
 
   if (result) {
@@ -91,7 +96,7 @@ async function bootstrapPrintDiscovery() {
     discoverDetail.value = '发现过程出错，将尝试连接当前默认地址。'
   }
 
-  await checkServiceConnection()
+  return await checkServiceConnection()
 }
 
 onMounted(async () => {
@@ -102,12 +107,16 @@ onMounted(async () => {
   discovering.value = true
   startDiscoverProgressUi()
   await nextTick()
+  let serviceOk = false
   try {
-    await bootstrapPrintDiscovery()
+    serviceOk = await bootstrapPrintDiscovery()
   } finally {
     stopDiscoverProgressUi(true)
     await new Promise((r) => setTimeout(r, 320))
     discovering.value = false
+  }
+  if (!serviceOk) {
+    await router.push({ name: 'settings' })
   }
 })
 </script>
