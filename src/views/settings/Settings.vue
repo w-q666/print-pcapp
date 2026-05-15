@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, markRaw } from 'vue'
-import { Tabs, Button, message } from 'ant-design-vue'
+import { Tabs, Button, message, Divider } from 'ant-design-vue'
 import { SaveOutlined } from '@ant-design/icons-vue'
 import BasePage from '../../components/layout/BasePage.vue'
 import { useSettings } from '../../stores/settings'
@@ -9,6 +9,7 @@ import { validateScanRange, validateDefaultServiceHost } from '../../utils/ip-ra
 import FileFormatTab from './FileFormatTab.vue'
 import PrintSettingsTab from './PrintSettingsTab.vue'
 import SystemSettingsTab from './SystemSettingsTab.vue'
+import PrintServiceConfigBlock from './PrintServiceConfigBlock.vue'
 
 const settings = useSettings()
 const appConfig = useAppConfig()
@@ -55,6 +56,8 @@ async function handleSave() {
     </template>
 
     <div class="settings-content">
+      <PrintServiceConfigBlock />
+      <Divider style="margin: 4px 0 12px" />
       <Tabs
         v-model:activeKey="activeTab"
         :items="tabItems.map(t => ({ key: t.key, label: t.label }))"
