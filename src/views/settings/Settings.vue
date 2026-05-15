@@ -5,7 +5,7 @@ import { SaveOutlined } from '@ant-design/icons-vue'
 import BasePage from '../../components/layout/BasePage.vue'
 import { useSettings } from '../../stores/settings'
 import { useAppConfig } from '../../stores/app-config'
-import { validateScanRange, validateDefaultServiceHost } from '../../utils/ip-range'
+import { validateScanRange, validateDefaultServiceHost, validateServicePort } from '../../utils/ip-range'
 import FileFormatTab from './FileFormatTab.vue'
 import PrintSettingsTab from './PrintSettingsTab.vue'
 import SystemSettingsTab from './SystemSettingsTab.vue'
@@ -26,6 +26,11 @@ async function handleSave() {
   const hostV = validateDefaultServiceHost(appConfig.serviceHost)
   if (!hostV.ok) {
     message.error(hostV.message ?? '默认服务 IP 不合法')
+    return
+  }
+  const portV = validateServicePort(appConfig.servicePort)
+  if (!portV.ok) {
+    message.error(portV.message ?? '服务端口不合法')
     return
   }
   const scanV = validateScanRange(appConfig.scanStartIp, appConfig.scanEndIp)

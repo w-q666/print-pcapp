@@ -62,3 +62,17 @@ export function validateDefaultServiceHost(host: string): ScanRangeValidation {
   if (parseIpv4(h)) return { ok: true }
   return { ok: false, message: '默认服务 IP 须为 localhost 或合法 IPv4' }
 }
+
+/** Java 打印服务 HTTP 端口（与探测、getPrintServers 使用同一端口） */
+export function validateServicePort(port: number | null | undefined): ScanRangeValidation {
+  if (port === null || port === undefined || Number.isNaN(port)) {
+    return { ok: false, message: '请输入服务端口' }
+  }
+  if (!Number.isInteger(port)) {
+    return { ok: false, message: '端口须为整数' }
+  }
+  if (port < 1 || port > 65535) {
+    return { ok: false, message: '端口须在 1～65535 之间' }
+  }
+  return { ok: true }
+}

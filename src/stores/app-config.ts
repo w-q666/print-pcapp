@@ -24,7 +24,12 @@ export const useAppConfig = defineStore('app-config', () => {
       const se = await store.get<string>('scanEndIp')
       const sri = await store.get<boolean>('scanRangeInferredOnce')
       if (host) serviceHost.value = host
-      if (port) servicePort.value = port
+      if (port !== null && port !== undefined) {
+        const n = Number(port)
+        if (Number.isInteger(n) && n >= 1 && n <= 65535) {
+          servicePort.value = n
+        }
+      }
       if (lp) lanPort.value = lp
       if (ss !== null && ss !== undefined) scanStartIp.value = ss
       if (se !== null && se !== undefined) scanEndIp.value = se

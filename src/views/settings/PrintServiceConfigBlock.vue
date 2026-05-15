@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Form, FormItem, Input, Typography, Space } from 'ant-design-vue'
+import { Form, FormItem, Input, InputNumber, Typography, Space } from 'ant-design-vue'
 import { useAppConfig } from '../../stores/app-config'
-import { validateScanRange, validateDefaultServiceHost } from '../../utils/ip-range'
+import { validateScanRange, validateDefaultServiceHost, validateServicePort } from '../../utils/ip-range'
 
 const appConfig = useAppConfig()
 
 const hostValidate = computed(() => validateDefaultServiceHost(appConfig.serviceHost))
+const portValidate = computed(() => validateServicePort(appConfig.servicePort))
 const scanValidate = computed(() => validateScanRange(appConfig.scanStartIp, appConfig.scanEndIp))
 
 const scanHint = computed(() => {
@@ -33,16 +34,25 @@ const scanHint = computed(() => {
         :validate-status="hostValidate.ok ? '' : 'error'"
         :help="hostValidate.ok ? '' : hostValidate.message"
       >
-        <Space align="center" wrap>
-          <Input
-            v-model:value="appConfig.serviceHost"
-            placeholder="localhost 或 IPv4，如 192.168.137.29"
-            style="width: 240px"
-          />
-          <Typography.Text type="secondary">
-            : {{ appConfig.servicePort }}（固定）
-          </Typography.Text>
-        </Space>
+        <Input
+          v-model:value="appConfig.serviceHost"
+          placeholder="localhost 或 IPv4，如 192.168.137.29"
+          style="max-width: 320px"
+        />
+      </FormItem>
+
+      <FormItem
+        label="Java 打印服务端口"
+        :validate-status="portValidate.ok ? '' : 'error'"
+        :help="portValidate.ok ? '与 Java 侧 application.properties / setting.xml 中端口一致，默认 2024。' : portValidate.message"
+      >
+        <InputNumber
+          v-model:value="appConfig.servicePort"
+          :min="1"
+          :max="65535"
+          :controls="true"
+          style="width: 160px"
+        />
       </FormItem>
 
       <FormItem
